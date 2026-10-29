@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<meta name="robots" content="noindex, nofollow" />
+<title>インテーク共有版</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#faf7f2; --surface:#ffffff; --text:#26302b; --dim:#68766e; --border:#dce5df;
+  --accent:#2f5d50; --accent-soft:#e6efe9; --warn:#9a6a1f; --warn-soft:#faf0dd; --danger:#b3402e;
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141816; --surface:#1e2421; --text:#eef2ee; --dim:#9aa79e; --border:#333d37; --accent:#7fbfa8; --accent-soft:#27352e; --warn:#e0aa54; --warn-soft:#3a2f1c; --danger:#e08a78; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",YuGothic,"Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:768px;margin:0 auto;padding:0 16px 32px;width:100%;min-width:0}
+/* Layout and section tabs */
+.layout{display:flex;flex-direction:column}
+.secnav{order:-1;position:sticky;top:var(--hdr,64px);z-index:20;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;padding:8px 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.secnav::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;min-height:40px;border-radius:999px;border:1px solid var(--border);background:var(--surface);padding:0 12px 0 6px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;white-space:nowrap}
+.tab .tnum{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700}
+.tab .tdot{width:7px;height:7px;border-radius:50%;background:var(--accent);visibility:hidden}
+.tab.filled .tdot{visibility:visible}
+.tab.active{border-color:var(--accent);background:var(--accent);color:#fff}
+.tab.active .tnum{background:#fff;color:var(--accent)}
+.tab.active .tdot{background:#fff}
+@media (prefers-color-scheme: dark){ .tab.active{color:#10201a} .tab.active .tnum{background:#10201a;color:var(--accent)} .tab.active .tdot{background:#10201a} }
+.secnav-title{display:none}
+@media(min-width:1024px){
+  .layout{display:grid;grid-template-columns:minmax(0,768px) 184px;justify-content:center;column-gap:24px;align-items:start}
+  .wrap{margin:0}
+  .secnav{order:0;top:calc(var(--hdr,64px) + 16px);margin-top:16px;flex-direction:column;overflow:visible;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:10px;gap:4px}
+  .secnav-title{display:block;font-size:12px;color:var(--dim);padding:2px 6px 6px}
+  .tab{width:100%;border-color:transparent;background:transparent;min-height:42px}
+  .tab .tdot{margin-left:auto}
+  .tab:hover{background:var(--accent-soft)}
+  .tab.active{background:var(--accent);border-color:var(--accent)}
+}
+@media(max-width:639px){ header.top .badge{display:none} header.top .inner{padding:10px 16px} }
+@media(min-width:1024px){ body:not(.sheet-mode) header.top .inner{max-width:976px;padding-right:0} }
+body.sheet-mode .secnav{display:none}
+body.sheet-mode .layout{display:block}
+body.sheet-mode .wrap{margin:0 auto}
+header.top{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--border);padding-top:env(safe-area-inset-top)}
+header.top .inner{max-width:768px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header.top h1{font-size:18px;margin:0;line-height:1.3}
+header.top p{margin:2px 0 0;font-size:12px;color:var(--dim)}
+.badge{margin-left:auto;font-size:12px;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:6px 10px;border-radius:999px;white-space:nowrap}
+section.block{margin-top:28px}
+section.block h2{display:flex;align-items:baseline;gap:10px;font-size:18px;margin:0}
+.num{display:inline-flex;width:28px;height:28px;flex-shrink:0;transform:translateY(4px);align-items:center;justify-content:center;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
+@media (prefers-color-scheme: dark){ .num{color:#10201a} }
+.grid{margin-top:16px;display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}.full{grid-column:span 2}}
+label.lbl, fieldset{border:0;padding:0;margin:0;display:block}
+.lbltext{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
+.hint{margin-left:8px;font-size:12px;font-weight:400;color:var(--dim)}
+input[type=text],input[type=tel],input[type=date],textarea{width:100%;min-height:52px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);padding:0 14px;font-size:16px;color:var(--text);outline:none;font-family:inherit}
+textarea{min-height:auto;padding:12px 14px;line-height:1.6;resize:vertical}
+input:focus,textarea:focus{border-color:var(--accent)}
+fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choice{min-height:48px;border-radius:999px;border:1px solid var(--border);background:var(--surface);padding:0 16px;font-size:16px;color:var(--text);cursor:pointer;font-family:inherit}
+.choice.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700}
+@media (prefers-color-scheme: dark){ .choice.active{color:#10201a} }
+.error{margin-top:24px;border-radius:var(--radius);background:var(--warn-soft);padding:12px 16px;font-size:15px;display:none}
+.error.show{display:block}
+.notice{margin-top:16px;font-size:13px;color:var(--dim);line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.bottombar{border-top:1px solid var(--border);background:var(--bg);padding:16px 0 calc(12px + env(safe-area-inset-bottom));margin-top:8px}
+.bottombar .inner{max-width:768px;margin:0 auto}
+.btn-primary{width:100%;min-height:56px;border:0;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-primary:disabled{opacity:.6}
+@media (prefers-color-scheme: dark){ .btn-primary{color:#10201a} }
+.bottomnote{margin:8px 0 0;text-align:center;font-size:12px;color:var(--dim)}
+.spacer{height:8px}
+.hidden{display:none !important}
+/* Sheet */
+.sheet-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 12px}
+.pill{border-radius:999px;background:var(--accent-soft);color:var(--accent);padding:6px 14px;font-size:14px;font-weight:700}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.plain{background:var(--surface);color:var(--dim);border:1px solid var(--border)}
+.statusmsg{margin:0 0 12px;border-radius:var(--radius);padding:10px 14px;font-size:14px;line-height:1.7}
+.statusmsg.warn{background:var(--warn-soft)}
+.statusmsg.danger{background:var(--warn-soft);border:2px solid var(--danger)}
+/* Modal */
+.modal-back{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);color:var(--text);border-radius:16px;max-width:460px;width:100%;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.modal h3{margin:0 0 10px;font-size:18px}
+.modal p{margin:0 0 16px;font-size:15px;line-height:1.7}
+.modal .mbtns{display:flex;flex-direction:column;gap:8px}
+.modal .mbtns button{min-height:52px;font-size:16px;border-radius:var(--radius)}
+#measure{position:absolute;left:-10000px;top:0;visibility:hidden;pointer-events:none}
+#measure .sheet-page{width:210mm;max-width:none;min-height:0;height:auto;box-shadow:none}
+#mm297{position:absolute;left:-10000px;top:0;height:297mm;width:1px;visibility:hidden}
+.btn{ min-height:44px;border-radius:999px;border:1px solid var(--border);background:var(--surface);padding:0 16px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){ .btn-accent{color:#10201a} }
+.sheet-page{background:#fff;color:#1a1a1a;width:100%;max-width:210mm;margin:0 auto;padding:11mm 12mm 10mm;box-shadow:0 1px 6px rgba(0,0,0,.18);font-size:11px;font-family:"Hiragino Mincho ProN","Hiragino Mincho Pro","Yu Mincho",YuMincho,serif;display:flex;flex-direction:column}
+@media(min-width:900px){.sheet-page{min-height:297mm}}
+.sheet-page table{border-collapse:collapse;width:100%}
+.sheet-page th,.sheet-page td{border:1px solid #444;padding:3px 6px;font-size:1em;line-height:1.45;vertical-align:top;text-align:left;overflow-wrap:break-word}
+.sheet-page th{background:#f0ede6;font-weight:600;white-space:nowrap;width:21%}
+.sheet-sign{margin-top:auto;padding-top:10px;text-align:right;font-size:1em;line-height:1.6}
+.sheet-sign p{margin:0}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff !important}
+  .no-print{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .sheet-page{box-shadow:none;max-width:none;width:210mm;height:297mm}
+}
+</style>
+</head>
+<body>
+<header class="top no-print">
+  <div class="inner">
+    <div>
+      <h1>インテーク入力（共有版）</h1>
+      <p>高齢者住宅相談センター 秋桜　お客様紹介シート用</p>
+    </div>
+    <span class="badge">集計シートへ保存</span>
+  </div>
+</header>
+
+<div class="layout">
+<main class="wrap">
+  <!-- FORM VIEW -->
+  <div id="formView">
+    <div class="notice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
+    <form id="intakeForm" novalidate></form>
+    <p class="error" id="formError" role="alert"></p>
+    <div class="spacer"></div>
+    <div class="bottombar no-print">
+      <div class="inner">
+        <button type="button" class="btn-primary" id="submitBtn">集計シートへ保存する</button>
+        <p class="bottomnote" id="bottomNote">保存すると紹介シートが表示されます</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET VIEW -->
+  <div id="sheetView" class="hidden">
+    <div class="sheet-toolbar no-print">
+      <span class="pill" id="savePill">集計シートに保存しました</span>
+      <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn" id="newBtn">新規入力</button>
+        <button type="button" class="btn" id="backBtn">入力に戻る</button>
+      </span>
+    </div>
+    <p class="statusmsg no-print hidden" id="saveMsg"></p>
+    <p class="statusmsg no-print hidden" id="fitMsg"></p>
+    <p class="no-print" style="font-size:14px;color:var(--dim);margin:0 0 12px">印刷またはPDF保存は、ブラウザの印刷機能から行ってください（用紙はA4です）。</p>
+    <div class="sheet-page" id="sheetPage" aria-label="お客様紹介シート"></div>
+  </div>
+</main>
+<nav class="secnav no-print" id="secNav" aria-label="セクション移動"></nav>
+</div>
+<div id="measure" aria-hidden="true"></div>
+<div id="mm297" aria-hidden="true"></div>
+
+<script>
+var ENDPOINT = "https://script.google.com/macros/s/AKfycbwT1OK6z9xIxutwlshb-ZzeVAgBTHqX6Lta-lnlwn9kopeqLxE6tD5Qu0RpwWLlrdDyDQ/exec";
+
+var GENDERS=["男性","女性"];
+var CARE_LEVELS=["未申請","申請中","要支援1","要支援2","要介護1","要介護2","要介護3","要介護4","要介護5"];
+var COST_SHARES=["1割","2割","3割"];
+var YES_NO=["有","無"];
+var CURRENT_STATUSES=["入院中","入所中","在宅"];
+var ADL_LEVELS=["自立","見守り","一部介助","全介助"];
+var MOBILITY_OPTIONS=["歩行","車椅子","その他"];
+var REHAB_OPTIONS=["PT","OT","ST"];
+var COMPREHENSION_OPTIONS=["有","ムラ有","無し"];
+
+function todayTokyo(){
+  var parts=new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+  function g(t){for(var i=0;i<parts.length;i++) if(parts[i].type===t) return parts[i].value; return "";}
+  return g("year")+"-"+g("month")+"-"+g("day");
+}
+function emptyForm(){
+  return {referralDate:todayTokyo(),staffName:"",staffPhone:"",facilityName:"",name:"",furigana:"",gender:"",birthDate:"",address:"",contact:"",careLevel:"",costShare:"",welfare:"",currentStatus:"",currentStatusDetail:"",currentServices:"",paralysis:"",paralysisDetail:"",vision:"",hearing:"",speech:"",rehab:[],adlMeal:"",adlToilet:"",adlBath:"",adlDress:"",adlTransfer:"",mobility:"",adlSleep:"",adlOral:"",dementiaType:"",dementiaSymptoms:"",comprehension:"",medicalDependency:"",medicalProcedures:"",medicalHistory:"",consultantName:"",consultantFurigana:"",consultantRelation:"",consultantAddress:"",consultantContact:"",familyStructure:"",consultantOther:"",desiredArea:"",desiredFacilityType:"",desiredTiming:"",initialCostLimit:"",monthlyCostLimit:"",facilityRequests:"",notes:""};
+}
+var form = emptyForm();
+
+function parseYmd(v){ var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||""); if(!m) return null; return {y:+m[1],m:+m[2],d:+m[3]}; }
+function computeAge(birth, asOf){ var b=parseYmd(birth), a=parseYmd(asOf); if(!b||!a) return null; var age=a.y-b.y; if(a.m<b.m||(a.m===b.m&&a.d<b.d)) age--; return age>=0?age:null; }
+function fmtJP(v){ var p=parseYmd(v); return p? p.y+"年"+p.m+"月"+p.d+"日" : (v||""); }
+function fmtSlash(v){ var p=parseYmd(v); return p? p.y+"/"+p.m+"/"+p.d : (v||""); }
+function fmtReceived(d){
+  var parts=new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d);
+  function g(t){for(var i=0;i<parts.length;i++) if(parts[i].type===t) return parts[i].value; return "";}
+  return g("year")+"/"+g("month")+"/"+g("day")+" "+g("hour")+":"+g("minute");
+}
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function paralysisCell(){ var b=(form.paralysis||"").trim(), d=(form.paralysisDetail||"").trim(); if(b&&d) return b+"（"+d+"）"; return b||d; }
+
+function buildPayload(){
+  var age=computeAge(form.birthDate, form.referralDate);
+  var obj={};
+  obj["受付日時"]=fmtReceived(new Date());
+  obj["ご紹介日"]=fmtSlash(form.referralDate);
+  obj["担当者"]=form.staffName;
+  obj["担当電話"]=form.staffPhone;
+  obj["紹介先施設名"]=form.facilityName;
+  obj["氏名"]=form.name;
+  obj["フリガナ"]=form.furigana;
+  obj["性別"]=form.gender;
+  obj["生年月日"]=fmtSlash(form.birthDate);
+  obj["年齢"]=age==null?"":String(age);
+  obj["住所"]=form.address;
+  obj["連絡先"]=form.contact;
+  obj["要介護度"]=form.careLevel;
+  obj["負担割合"]=form.costShare;
+  obj["生活保護"]=form.welfare;
+  obj["現状"]=form.currentStatus;
+  obj["現状の詳細"]=form.currentStatusDetail;
+  obj["利用中のサービス"]=form.currentServices;
+  obj["麻痺"]=paralysisCell();
+  obj["視力"]=form.vision;
+  obj["聴力"]=form.hearing;
+  obj["会話"]=form.speech;
+  obj["リハビリ"]=form.rehab.join("、");
+  obj["食事"]=form.adlMeal;
+  obj["排泄"]=form.adlToilet;
+  obj["入浴"]=form.adlBath;
+  obj["更衣"]=form.adlDress;
+  obj["移乗"]=form.adlTransfer;
+  obj["移動"]=form.mobility;
+  obj["睡眠"]=form.adlSleep;
+  obj["口腔ケア"]=form.adlOral;
+  obj["認知症の種類"]=form.dementiaType;
+  obj["認知症状の状況"]=form.dementiaSymptoms;
+  obj["理解力"]=form.comprehension;
+  obj["医療依存"]=form.medicalDependency;
+  obj["医療処置"]=form.medicalProcedures;
+  obj["既往歴と経過"]=form.medicalHistory;
+  obj["相談者氏名"]=form.consultantName;
+  obj["相談者フリガナ"]=form.consultantFurigana;
+  obj["相談者続柄"]=form.consultantRelation;
+  obj["相談者住所"]=form.consultantAddress;
+  obj["相談者連絡先"]=form.consultantContact;
+  obj["家族構成"]=form.familyStructure;
+  obj["相談者その他"]=form.consultantOther;
+  obj["希望エリア"]=form.desiredArea;
+  obj["希望施設種類"]=form.desiredFacilityType;
+  obj["入居希望時期"]=form.desiredTiming;
+  obj["入居時費用上限"]=form.initialCostLimit;
+  obj["月額費用上限"]=form.monthlyCostLimit;
+  obj["施設への要望"]=form.facilityRequests;
+  obj["備考"]=form.notes;
+  return obj;
+}
+
+function composeSheetOther(){
+  var lines=[];
+  var status=[form.currentStatus,form.currentStatusDetail].map(function(v){return (v||"").trim();}).filter(Boolean).join(" ");
+  if(status) lines.push("現状："+status);
+  if(form.welfare.trim()) lines.push("生活保護："+form.welfare.trim());
+  var adl=[["食事",form.adlMeal],["排泄",form.adlToilet],["入浴",form.adlBath],["更衣",form.adlDress],["移乗",form.adlTransfer],["移動",form.mobility],["睡眠",form.adlSleep],["口腔ケア",form.adlOral]];
+  var adlText=adl.filter(function(p){return p[1].trim();}).map(function(p){return p[0]+" "+p[1].trim();}).join("、");
+  if(adlText) lines.push("日常生活援助："+adlText);
+  var body=[]; var par=paralysisCell(); if(par) body.push("麻痺 "+par);
+  if(form.vision.trim()) body.push("視力 "+form.vision.trim());
+  if(form.hearing.trim()) body.push("聴力 "+form.hearing.trim());
+  if(form.speech.trim()) body.push("会話 "+form.speech.trim());
+  if(form.rehab.length) body.push("リハビリ "+form.rehab.join("、"));
+  if(body.length) lines.push("身体状況："+body.join("、"));
+  if(form.dementiaType.trim()) lines.push("認知症の種類："+form.dementiaType.trim());
+  if(form.comprehension.trim()) lines.push("理解力："+form.comprehension.trim());
+  if(form.medicalProcedures.trim()) lines.push("医療処置："+form.medicalProcedures.trim());
+  if(form.currentServices.trim()) lines.push("利用中のサービス："+form.currentServices.trim());
+  var wishes=[];
+  if(form.desiredArea.trim()) wishes.push("エリア "+form.desiredArea.trim());
+  if(form.desiredFacilityType.trim()) wishes.push("施設種類 "+form.desiredFacilityType.trim());
+  if(form.desiredTiming.trim()) wishes.push("時期 "+form.desiredTiming.trim());
+  if(form.initialCostLimit.trim()) wishes.push("入居時費用 "+form.initialCostLimit.trim()+"まで");
+  if(form.monthlyCostLimit.trim()) wishes.push("月額費用 "+form.monthlyCostLimit.trim()+"まで");
+  if(form.facilityRequests.trim()) wishes.push("施設への要望 "+form.facilityRequests.trim());
+  if(wishes.length) lines.push("ご希望条件："+wishes.join("、"));
+  if(form.notes.trim()) lines.push("備考："+form.notes.trim());
+  return lines.join("\n");
+}
+function composeConsultantOther(){
+  var lines=[];
+  if(form.consultantContact.trim()) lines.push("連絡先："+form.consultantContact.trim());
+  if(form.familyStructure.trim()) lines.push("家族構成："+form.familyStructure.trim());
+  if(form.consultantOther.trim()) lines.push(form.consultantOther.trim());
+  return lines.join("\n");
+}
+
+/* ---- Form rendering ---- */
+var formEl=document.getElementById("intakeForm");
+function textField(label,key,opts){
+  opts=opts||{};
+  var wrap=document.createElement("div"); if(opts.full) wrap.className="full";
+  var lab=document.createElement("label"); lab.className="lbl";
+  lab.innerHTML='<span class="lbltext">'+esc(label)+(opts.hint?'<span class="hint">'+esc(opts.hint)+'</span>':'')+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+'</span>';
+  var input=document.createElement("input");
+  input.type=opts.type||"text"; if(opts.inputMode) input.setAttribute("inputmode",opts.inputMode);
+  input.setAttribute("aria-label",label); input.value=form[key]||"";
+  input.addEventListener("input",function(){ form[key]=input.value; if(key==="birthDate"||key==="referralDate") updateAgeHints(); });
+  input.dataset.key=key;
+  lab.appendChild(input); wrap.appendChild(lab); return wrap;
+}
+function dateField(label,key){
+  var wrap=document.createElement("div");
+  var lab=document.createElement("label"); lab.className="lbl";
+  lab.innerHTML='<span class="lbltext">'+esc(label)+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+'</span>';
+  var input=document.createElement("input"); input.type="date"; input.setAttribute("aria-label",label); input.value=form[key]||""; input.dataset.key=key;
+  input.addEventListener("input",function(){ form[key]=input.value; updateAgeHints(); });
+  lab.appendChild(input); wrap.appendChild(lab); return wrap;
+}
+function areaField(label,key,rows){
+  var wrap=document.createElement("div"); wrap.className="full";
+  var lab=document.createElement("label"); lab.className="lbl";
+  lab.innerHTML='<span class="lbltext">'+esc(label)+'</span>';
+  var ta=document.createElement("textarea"); ta.rows=rows||3; ta.setAttribute("aria-label",label); ta.value=form[key]||""; ta.dataset.key=key;
+  ta.addEventListener("input",function(){ form[key]=ta.value; });
+  lab.appendChild(ta); wrap.appendChild(lab); return wrap;
+}
+function choiceField(label,options,key,multi){
+  var wrap=document.createElement("div");
+  var fs=document.createElement("fieldset");
+  var lg=document.createElement("legend"); lg.textContent=label; fs.appendChild(lg);
+  var div=document.createElement("div"); div.className="choices"; div.setAttribute("role", multi?"group":"radiogroup"); div.setAttribute("aria-label",label);
+  options.forEach(function(opt){
+    var btn=document.createElement("button"); btn.type="button"; btn.className="choice"; btn.textContent=opt;
+    btn.setAttribute("aria-label",label+" "+opt);
+    function sync(){
+      var active = multi ? form[key].indexOf(opt)>=0 : form[key]===opt;
+      btn.classList.toggle("active",active);
+      if(!multi) btn.setAttribute("aria-checked", active?"true":"false"); else btn.setAttribute("aria-pressed", active?"true":"false");
+    }
+    btn.addEventListener("click",function(){
+      if(multi){ var i=form[key].indexOf(opt); if(i>=0) form[key].splice(i,1); else form[key].push(opt); }
+      else { form[key]= (form[key]===opt?"":opt); }
+      var all=div.children; for(var j=0;j<all.length;j++){ var o=options[j]; var a = multi ? form[key].indexOf(o)>=0 : form[key]===o; all[j].classList.toggle("active",a); }
+    });
+    sync(); div.appendChild(btn);
+  });
+  fs.appendChild(div); wrap.appendChild(fs); return wrap;
+}
+function section(num,title,children){
+  var s=document.createElement("section"); s.className="block"; s.id="sec-"+num;
+  s.innerHTML='<h2><span class="num">'+num+'</span>'+esc(title)+'</h2>';
+  var g=document.createElement("div"); g.className="grid";
+  children.forEach(function(c){ g.appendChild(c); });
+  s.appendChild(g); return s;
+}
+function fullNode(node){ var d=document.createElement("div"); d.className="full"; d.appendChild(node); return d; }
+
+function renderForm(){
+  formEl.innerHTML="";
+  formEl.appendChild(section(1,"基本",[
+    dateField("ご紹介日","referralDate"),
+    textField("担当者","staffName"),
+    textField("担当電話","staffPhone",{type:"tel",inputMode:"tel"}),
+    textField("紹介先施設名","facilityName")
+  ]));
+  formEl.appendChild(section(2,"ご入居希望者様",[
+    textField("氏名","name",{hint:"必須"}),
+    textField("フリガナ","furigana"),
+    choiceField("性別",GENDERS,"gender",false),
+    dateField("生年月日","birthDate"),
+    fullNode(textField("住所","address")),
+    textField("連絡先","contact",{type:"tel",inputMode:"tel"}),
+    choiceField("要介護度",CARE_LEVELS,"careLevel",false),
+    choiceField("負担割合",COST_SHARES,"costShare",false),
+    choiceField("生活保護",YES_NO,"welfare",false),
+    choiceField("現状",CURRENT_STATUSES,"currentStatus",false),
+    areaField("現状の詳細","currentStatusDetail",3),
+    areaField("利用中のサービス","currentServices",3)
+  ]));
+  formEl.appendChild(section(3,"身体状況",[
+    choiceField("麻痺",YES_NO,"paralysis",false),
+    textField("麻痺の部位と程度","paralysisDetail"),
+    textField("視力","vision"),
+    textField("聴力","hearing"),
+    textField("会話","speech"),
+    choiceField("リハビリ",REHAB_OPTIONS,"rehab",true)
+  ]));
+  formEl.appendChild(section(4,"日常生活援助",[
+    choiceField("食事",ADL_LEVELS,"adlMeal",false),
+    choiceField("排泄",ADL_LEVELS,"adlToilet",false),
+    choiceField("入浴",ADL_LEVELS,"adlBath",false),
+    choiceField("更衣",ADL_LEVELS,"adlDress",false),
+    choiceField("移乗",ADL_LEVELS,"adlTransfer",false),
+    choiceField("移動",MOBILITY_OPTIONS,"mobility",false),
+    choiceField("睡眠",ADL_LEVELS,"adlSleep",false),
+    choiceField("口腔ケア",ADL_LEVELS,"adlOral",false)
+  ]));
+  formEl.appendChild(section(5,"認知と医療",[
+    textField("認知症の種類","dementiaType"),
+    choiceField("理解力",COMPREHENSION_OPTIONS,"comprehension",false),
+    areaField("認知症状の状況","dementiaSymptoms",3),
+    areaField("医療依存","medicalDependency",3),
+    areaField("医療処置","medicalProcedures",3),
+    areaField("既往歴と経過","medicalHistory",4)
+  ]));
+  formEl.appendChild(section(6,"相談者情報",[
+    textField("相談者氏名","consultantName"),
+    textField("相談者フリガナ","consultantFurigana"),
+    textField("続柄","consultantRelation"),
+    textField("相談者連絡先","consultantContact",{type:"tel",inputMode:"tel"}),
+    fullNode(textField("相談者住所","consultantAddress")),
+    areaField("家族構成","familyStructure",3),
+    areaField("相談者その他","consultantOther",3)
+  ]));
+  formEl.appendChild(section(7,"ご希望条件",[
+    textField("希望エリア","desiredArea"),
+    textField("希望施設種類","desiredFacilityType"),
+    textField("入居希望時期","desiredTiming"),
+    textField("入居時費用上限","initialCostLimit"),
+    textField("月額費用上限","monthlyCostLimit"),
+    areaField("施設への要望","facilityRequests",3)
+  ]));
+  formEl.appendChild(section(8,"備考",[
+    areaField("備考","notes",4)
+  ]));
+  updateAgeHints();
+  updateNavFilled();
+}
+function updateAgeHints(){
+  var age=computeAge(form.birthDate, form.referralDate);
+  document.querySelectorAll("[data-age-hint]").forEach(function(el){ el.textContent = age!=null ? age+"歳" : ""; });
+}
+
+/* ---- Section tabs ---- */
+var SECTIONS=[
+  {n:1,label:"基本",keys:["staffName","staffPhone","facilityName"]},
+  {n:2,label:"入居希望者",keys:["name","furigana","gender","birthDate","address","contact","careLevel","costShare","welfare","currentStatus","currentStatusDetail","currentServices"]},
+  {n:3,label:"身体状況",keys:["paralysis","paralysisDetail","vision","hearing","speech","rehab"]},
+  {n:4,label:"生活援助",keys:["adlMeal","adlToilet","adlBath","adlDress","adlTransfer","mobility","adlSleep","adlOral"]},
+  {n:5,label:"認知と医療",keys:["dementiaType","comprehension","dementiaSymptoms","medicalDependency","medicalProcedures","medicalHistory"]},
+  {n:6,label:"相談者",keys:["consultantName","consultantFurigana","consultantRelation","consultantContact","consultantAddress","familyStructure","consultantOther"]},
+  {n:7,label:"希望条件",keys:["desiredArea","desiredFacilityType","desiredTiming","initialCostLimit","monthlyCostLimit","facilityRequests"]},
+  {n:8,label:"備考",keys:["notes"]}
+];
+var navEl=document.getElementById("secNav");
+var headerEl=document.querySelector("header.top");
+(function buildNav(){
+  var t=document.createElement("div"); t.className="secnav-title"; t.textContent="セクションへ移動"; navEl.appendChild(t);
+  SECTIONS.forEach(function(s){
+    var b=document.createElement("button"); b.type="button"; b.className="tab"; b.dataset.sec=s.n;
+    b.innerHTML='<span class="tnum">'+s.n+'</span><span>'+esc(s.label)+'</span><span class="tdot" aria-hidden="true"></span>';
+    b.setAttribute("aria-label",s.n+" "+s.label+"へ移動");
+    b.addEventListener("click",function(){ jumpTo(s.n); });
+    navEl.appendChild(b);
+  });
+})();
+function isWide(){ return window.matchMedia("(min-width:1024px)").matches; }
+function scrollOffset(){ return headerEl.offsetHeight + (isWide()?0:navEl.offsetHeight) + 12; }
+function setHeaderVar(){ document.documentElement.style.setProperty("--hdr", headerEl.offsetHeight+"px"); }
+function jumpTo(n, focusEl){
+  var el=document.getElementById("sec-"+n); if(!el) return;
+  var top=el.getBoundingClientRect().top + window.pageYOffset - scrollOffset();
+  window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
+  setActiveTab(n);
+  if(focusEl) setTimeout(function(){ try{ focusEl.focus({preventScroll:true}); }catch(e){ focusEl.focus(); } }, 400);
+}
+var activeSec=0;
+function setActiveTab(n){
+  if(n===activeSec) return; activeSec=n;
+  var tabs=navEl.querySelectorAll(".tab");
+  for(var i=0;i<tabs.length;i++){
+    var on = +tabs[i].dataset.sec===n;
+    tabs[i].classList.toggle("active",on);
+    if(on){ tabs[i].setAttribute("aria-current","true");
+      if(!isWide()){ var left=tabs[i].offsetLeft - (navEl.clientWidth-tabs[i].offsetWidth)/2; navEl.scrollTo({left:Math.max(0,left),behavior:"smooth"}); }
+    } else tabs[i].removeAttribute("aria-current");
+  }
+}
+function updateActiveFromScroll(){
+  if(document.body.classList.contains("sheet-mode")) return;
+  var off=scrollOffset()+40, cur=1;
+  for(var i=0;i<SECTIONS.length;i++){
+    var el=document.getElementById("sec-"+SECTIONS[i].n);
+    if(el && el.getBoundingClientRect().top<=off) cur=SECTIONS[i].n;
+  }
+  if(window.innerHeight+window.pageYOffset >= document.documentElement.scrollHeight-4) cur=SECTIONS[SECTIONS.length-1].n;
+  setActiveTab(cur);
+}
+function hasValue(v){ return Array.isArray(v) ? v.length>0 : String(v||"").trim()!==""; }
+function updateNavFilled(){
+  var tabs=navEl.querySelectorAll(".tab");
+  SECTIONS.forEach(function(s,i){ tabs[i].classList.toggle("filled", s.keys.some(function(k){ return hasValue(form[k]); })); });
+}
+var scrollTick=false;
+window.addEventListener("scroll",function(){ if(scrollTick) return; scrollTick=true; requestAnimationFrame(function(){ scrollTick=false; updateActiveFromScroll(); }); },{passive:true});
+window.addEventListener("resize",function(){ setHeaderVar(); updateActiveFromScroll(); });
+formEl.addEventListener("input",updateNavFilled);
+formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")) updateNavFilled(); });
+
+renderForm();
+setHeaderVar();
+updateActiveFromScroll();
+
+/* ---- Sheet rendering ---- */
+function row(label,value,multiline){
+  return '<tr><th>'+esc(label)+'</th><td colspan="5"'+(multiline?' style="white-space:pre-wrap"':'')+'>'+esc(value||"")+(value?"":"　")+'</td></tr>';
+}
+function renderSheet(){
+  var age=computeAge(form.birthDate, form.referralDate);
+  var careText=[form.careLevel, form.costShare?("負担割合"+form.costShare):""].filter(Boolean).join("　");
+  var consultantNameText=form.consultantName? form.consultantName+(form.consultantRelation?("（"+form.consultantRelation+"）"):"") : "";
+  var html='';
+  html+='<h2 style="text-align:center;font-weight:700;font-size:1.4545em;line-height:1.4;margin:0">高齢者住宅相談センター 秋桜 お客様紹介シート</h2>';
+  if(form.facilityName) html+='<p style="font-size:1.0909em;margin:8px 0 0">'+esc(form.facilityName)+' 御中</p>';
+  html+='<p style="font-size:1em;line-height:1.65;margin-bottom:0;margin-top:'+(form.facilityName?"4px":"8px")+'">大変お世話になっております。秋桜の'+esc(form.staffName)+'でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。</p>';
+  html+='<p style="text-align:right;font-size:1em;margin:5px 0 0">ご紹介日：'+esc(fmtJP(form.referralDate))+'</p>';
+  html+='<h3 style="font-size:1.1364em;font-weight:700;margin:9px 0 0">ご入居希望者様</h3>';
+  html+='<table style="margin-top:4px"><tbody>';
+  html+=row("フリガナ",form.furigana);
+  html+=row("氏名",form.name);
+  html+='<tr><th>生年月日</th><td>'+esc(fmtJP(form.birthDate)||"　")+'</td><th style="width:10%">性別</th><td style="width:14%">'+esc(form.gender||"　")+'</td><th style="width:10%">年齢</th><td style="width:14%">'+(age!=null?age+"歳":"　")+'</td></tr>';
+  html+=row("住所",form.address);
+  html+=row("要介護度（負担割合）",careText);
+  html+=row("既往歴と経過",form.medicalHistory,true);
+  html+=row("認知症状の状況",form.dementiaSymptoms,true);
+  html+=row("医療依存",form.medicalDependency,true);
+  html+=row("その他",composeSheetOther(),true);
+  html+='</tbody></table>';
+  html+='<h3 style="font-size:1.1364em;font-weight:700;margin:10px 0 0">相談者情報</h3>';
+  html+='<table style="margin-top:4px"><tbody>';
+  html+=row("フリガナ",form.consultantFurigana);
+  html+=row("氏名（続柄）",consultantNameText);
+  html+=row("住所",form.consultantAddress);
+  html+=row("その他",composeConsultantOther(),true);
+  html+='</tbody></table>';
+  html+='<p style="font-size:.9545em;margin:10px 0 0">※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。</p>';
+  html+='<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(form.staffName)+'</p><p>TEL：'+esc(form.staffPhone)+'</p><p>メール：info@goodbyinc.com</p></div>';
+  document.getElementById("sheetPage").innerHTML=html;
+  fitSheet();
+}
+
+/* ---- A4 fit: shrink text step by step until the sheet fits one A4 page ---- */
+var FONT_STEPS=[11,10.5,10,9.5,9,8.5];
+function fitSheet(){
+  var page=document.getElementById("sheetPage");
+  var meas=document.getElementById("measure");
+  var limit=document.getElementById("mm297").getBoundingClientRect().height-6; /* small safety margin */
+  meas.innerHTML='<div class="sheet-page">'+page.innerHTML+'</div>';
+  var m=meas.firstChild, chosen=null;
+  for(var i=0;i<FONT_STEPS.length;i++){
+    m.style.fontSize=FONT_STEPS[i]+"px";
+    if(m.scrollHeight<=limit){ chosen=FONT_STEPS[i]; break; }
+  }
+  meas.innerHTML="";
+  var fitMsg=document.getElementById("fitMsg");
+  fitMsg.className="statusmsg no-print";
+  if(chosen===null){
+    page.style.fontSize=FONT_STEPS[FONT_STEPS.length-1]+"px";
+    fitMsg.classList.add("danger");
+    fitMsg.textContent="内容が多いため、文字を最小まで小さくしてもA4判1枚に収まりません。このまま印刷すると2枚になります。「入力に戻る」で記述を短くしてください。";
+  }else if(chosen<FONT_STEPS[0]){
+    page.style.fontSize=chosen+"px";
+    fitMsg.classList.add("warn");
+    fitMsg.textContent="A4判1枚に収めるため、紹介シートの文字を少し小さくしています（"+chosen+"px）。";
+  }else{
+    page.style.fontSize="";
+    fitMsg.classList.add("hidden");
+    fitMsg.textContent="";
+  }
+  return chosen;
+}
+
+/* ---- Submit ---- */
+var submitBtn=document.getElementById("submitBtn");
+var errorEl=document.getElementById("formError");
+var bottomNote=document.getElementById("bottomNote");
+var sending=false;
+var SUBMIT_LABEL="集計シートへ保存する";
+var TIMEOUT_MS=20000;
+/* saved: null (not saved yet) or {snapshot, status:"ok"|"unknown"} */
+var saved=null;
+
+function snapshot(){ return JSON.stringify(form); }
+function showError(msg){ errorEl.textContent=msg; errorEl.classList.add("show"); errorEl.scrollIntoView({behavior:"smooth",block:"center"}); }
+function updateBottomNote(){
+  bottomNote.textContent = saved ? "この方の内容は保存済みです。もう一度押すと、新しい行を追加するか確認します" : "保存すると紹介シートが表示されます";
+}
+function showSheet(mode){
+  renderSheet();
+  var pill=document.getElementById("savePill"), msg=document.getElementById("saveMsg");
+  pill.className="pill"; msg.className="statusmsg no-print hidden"; msg.textContent="";
+  if(mode==="ok"){ pill.textContent="集計シートに保存しました"; }
+  else if(mode==="unknown"){
+    pill.classList.add("warn"); pill.textContent="保存を確認できませんでした";
+    msg.className="statusmsg no-print warn";
+    msg.textContent="送信はしましたが、集計シートに保存されたかを確認できませんでした。もう一度保存すると重複する場合があるため、まず閲覧権限のある方に集計シートを確認してもらってください。";
+  }
+  else if(mode==="notsaved"){
+    pill.classList.add("plain"); pill.textContent="この内容は保存していません";
+    msg.className="statusmsg no-print warn";
+    msg.textContent="修正後の内容は集計シートに保存していません。集計シートには前回保存した内容が残っています。";
+  }
+  else if(mode==="same"){
+    if(saved && saved.status==="unknown"){ pill.classList.add("warn"); pill.textContent="保存を確認できませんでした（前回の送信）"; }
+    else pill.textContent="保存済みの内容です（再送信していません）";
+  }
+  document.body.classList.add("sheet-mode");
+  document.getElementById("formView").classList.add("hidden");
+  document.getElementById("sheetView").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function showForm(){
+  document.body.classList.remove("sheet-mode");
+  document.getElementById("sheetView").classList.add("hidden");
+  document.getElementById("formView").classList.remove("hidden");
+  setHeaderVar();
+}
+
+function askResend(){
+  return new Promise(function(resolve){
+    var back=document.createElement("div"); back.className="modal-back no-print";
+    back.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">'+
+      '<h3 id="mTitle">この方はすでに保存済みです</h3>'+
+      '<p>もう一度保存すると、集計シートに<strong>新しい行が追加</strong>されます。前に保存した行は残るため、不要になった行は集計シート側で削除が必要です。</p>'+
+      '<div class="mbtns">'+
+        '<button type="button" class="btn-primary" data-r="resend">新しい行として保存する</button>'+
+        '<button type="button" class="btn" data-r="sheet">保存せず紹介シートだけ表示</button>'+
+        '<button type="button" class="btn" data-r="cancel">キャンセル</button>'+
+      '</div></div>';
+    function close(r){ document.removeEventListener("keydown",onKey); back.remove(); resolve(r); }
+    function onKey(e){ if(e.key==="Escape") close("cancel"); }
+    back.addEventListener("click",function(e){ var b=e.target.closest("[data-r]"); if(b) close(b.dataset.r); else if(e.target===back) close("cancel"); });
+    document.addEventListener("keydown",onKey);
+    document.body.appendChild(back);
+    back.querySelector('[data-r="cancel"]').focus();
+  });
+}
+
+function doSend(){
+  if(navigator.onLine===false){ showError("インターネットに接続されていません。接続を確認してから、もう一度保存してください。（まだ送信していません）"); return; }
+  sending=true; submitBtn.disabled=true; submitBtn.textContent="保存しています…";
+  var snap=snapshot();
+  var payload=buildPayload();
+  var ctrl = ("AbortController" in window) ? new AbortController() : null;
+  var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, TIMEOUT_MS) : null;
+  function done(){ if(timer) clearTimeout(timer); sending=false; submitBtn.disabled=false; submitBtn.textContent=SUBMIT_LABEL; }
+  /* text/plain keeps this a simple request (no preflight). Reading the reply requires the script to return JSON such as {"ok":true}. */
+  fetch(ENDPOINT, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload), redirect:"follow", signal: ctrl?ctrl.signal:undefined})
+    .then(function(res){ return res.text().then(function(t){ var j=null; try{ j=JSON.parse(t); }catch(e){} return {res:res,json:j}; }); })
+    .then(function(r){
+      done();
+      if(r.json && r.json.ok===true){ saved={snapshot:snap,status:"ok"}; updateBottomNote(); showSheet("ok"); }
+      else if(r.json && r.json.ok===false){
+        showError("集計シートへの保存に失敗しました（"+(r.json.error||"理由不明")+"）。時間をおいて、もう一度お試しください。");
+      }
+      else { saved={snapshot:snap,status:"unknown"}; updateBottomNote(); showSheet("unknown"); }
+    })
+    .catch(function(){
+      /* Network error, timeout or unreadable reply: the request may still have reached the sheet. */
+      done(); saved={snapshot:snap,status:"unknown"}; updateBottomNote(); showSheet("unknown");
+    });
+}
+
+submitBtn.addEventListener("click", function(){
+  if(sending) return;
+  errorEl.classList.remove("show"); errorEl.textContent="";
+  if(!form.name.trim()){
+    errorEl.textContent="氏名を入力してください。"; errorEl.classList.add("show");
+    jumpTo(2, formEl.querySelector('[data-key="name"]'));
+    return;
+  }
+  if(!saved){ doSend(); return; }
+  if(saved.snapshot===snapshot()){ showSheet("same"); return; }
+  askResend().then(function(r){
+    if(r==="resend") doSend();
+    else if(r==="sheet") showSheet("notsaved");
+  });
+});
+document.getElementById("newBtn").addEventListener("click", function(){
+  form=emptyForm(); saved=null; updateBottomNote(); renderForm();
+  showForm(); activeSec=0; window.scrollTo(0,0); updateActiveFromScroll();
+});
+document.getElementById("backBtn").addEventListener("click", function(){
+  showForm(); window.scrollTo(0,0); activeSec=0; updateActiveFromScroll();
+});
+</script>
+</body>
+</html>
