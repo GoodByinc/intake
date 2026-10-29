@@ -77,6 +77,35 @@ details.collapsible[open]>summary{border-color:var(--accent)}
 details.collapsible>summary h2{flex-wrap:wrap}
 .togglehint{margin-left:auto;font-size:13px;font-weight:600;color:var(--dim)}
 .secnote{margin:8px 0 0;font-size:13px;color:var(--dim)}
+/* Header preview button */
+.hdr-preview{margin-left:auto;min-height:40px;font-size:14px;white-space:nowrap;flex-shrink:0}
+header.top .inner>div:first-child{min-width:0}
+@media(max-width:639px){
+  header.top .inner{flex-wrap:nowrap}
+  header.top h1{font-size:16px}
+  header.top p{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr-preview{min-height:36px;padding:0 12px;font-size:13px}
+}
+body.sheet-mode .hdr-preview{display:none}
+/* Right-edge section slider (narrow screens) */
+.scrubber{position:fixed;right:4px;top:calc(var(--hdr,64px) + var(--navh,0px) + 12px);bottom:calc(96px + env(safe-area-inset-bottom));width:34px;z-index:25;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:6px 0;border-radius:999px;background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.08);touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab}
+.scrubber .sdot{display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft)}
+.scrubber .sdot.active{background:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){ .scrubber .sdot.active{color:#10201a} }
+.scrubber.dragging{box-shadow:0 2px 14px rgba(0,0,0,.25)}
+.scrubbubble{position:fixed;right:48px;z-index:26;transform:translateY(-50%);background:var(--accent);color:#fff;font-size:16px;font-weight:700;padding:8px 14px;border-radius:12px;pointer-events:none;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+@media (prefers-color-scheme: dark){ .scrubbubble{color:#10201a} }
+@media(min-width:1024px){ .scrubber,.scrubbubble{display:none !important} }
+@media(max-width:1023px){ body:not(.sheet-mode) .wrap{padding-right:48px} }
+body.sheet-mode .scrubber, body.sheet-mode .scrubbubble{display:none !important}
+/* Preview / confirm */
+.missing{margin:0 0 12px;border-radius:var(--radius);background:var(--warn-soft);padding:10px 14px;font-size:14px;line-height:1.6}
+.missing .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.missing .mchip{min-height:36px;border-radius:999px;border:1px solid var(--warn);background:var(--surface);color:var(--text);padding:0 12px;font-size:14px;cursor:pointer;font-family:inherit}
+.savebar{position:sticky;bottom:0;z-index:15;background:var(--bg);border-top:1px solid var(--border);padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-top:16px}
+.flash{animation:flash 1.4s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--warn)}100%{box-shadow:0 0 0 4px transparent}}
+.toast{white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:120;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:15px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 /* Long-press details */
 .lptarget{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .choice{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
@@ -90,12 +119,12 @@ details.collapsible>summary h2{flex-wrap:wrap}
 .error{margin-top:24px;border-radius:var(--radius);background:var(--warn-soft);padding:12px 16px;font-size:15px;display:none}
 .error.show{display:block}
 .notice{margin-top:16px;font-size:13px;color:var(--dim);line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
-.bottombar{border-top:1px solid var(--border);background:var(--bg);padding:16px 0 calc(12px + env(safe-area-inset-bottom));margin-top:8px}
+.bottombar{position:sticky;bottom:0;z-index:15;border-top:1px solid var(--border);background:var(--bg);padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin-top:8px}
 .bottombar .inner{max-width:768px;margin:0 auto}
 .btn-primary{width:100%;min-height:56px;border:0;border-radius:var(--radius);background:var(--accent);color:#fff;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit}
 .btn-primary:disabled{opacity:.6}
 @media (prefers-color-scheme: dark){ .btn-primary{color:#10201a} }
-.bottomnote{margin:8px 0 0;text-align:center;font-size:12px;color:var(--dim)}
+.bottomnote{margin:6px 0 0;text-align:center;font-size:12px;color:var(--dim)}
 .spacer{height:8px}
 .hidden{display:none !important}
 /* Sheet */
@@ -145,7 +174,7 @@ details.collapsible>summary h2{flex-wrap:wrap}
       <h1>インテーク入力（共有版）</h1>
       <p>高齢者住宅相談センター 秋桜　お客様紹介シート用</p>
     </div>
-    <span class="badge">集計シートへ保存</span>
+    <button type="button" class="btn hdr-preview" id="previewBtnTop">紹介シートを見る</button>
   </div>
 </header>
 
@@ -153,14 +182,14 @@ details.collapsible>summary h2{flex-wrap:wrap}
 <main class="wrap">
   <!-- FORM VIEW -->
   <div id="formView">
-    <div class="notice" id="mainNotice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、その項目の詳細を書き足せます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
+    <div class="notice" id="mainNotice">入力したら一番下の「紹介シートを確認して保存へ」を押し、内容を確かめてから保存してください。紹介シートは上の「紹介シートを見る」からいつでも確認できます。入力途中の内容はこの端末に一時保存され、保存した時、新規入力を押した時、24時間たった時に消えます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、その項目の詳細を書き足せます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
     <form id="intakeForm" novalidate></form>
     <p class="error" id="formError" role="alert"></p>
     <div class="spacer"></div>
     <div class="bottombar no-print">
       <div class="inner">
-        <button type="button" class="btn-primary" id="submitBtn">集計シートへ保存する</button>
-        <p class="bottomnote" id="bottomNote">保存すると紹介シートが表示されます</p>
+        <button type="button" class="btn-primary" id="submitBtn">紹介シートを確認して保存へ</button>
+        <p class="bottomnote" id="bottomNote">次の画面で内容を確認してから保存します</p>
       </div>
     </div>
   </div>
@@ -168,20 +197,29 @@ details.collapsible>summary h2{flex-wrap:wrap}
   <!-- SHEET VIEW -->
   <div id="sheetView" class="hidden">
     <div class="sheet-toolbar no-print">
-      <span class="pill" id="savePill">集計シートに保存しました</span>
+      <span class="pill" id="savePill"></span>
       <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn" id="newBtn">新規入力</button>
         <button type="button" class="btn" id="backBtn">入力に戻る</button>
+        <button type="button" class="btn" id="copyBtn">文章でコピー</button>
+        <button type="button" class="btn" id="newBtn">新規入力</button>
       </span>
     </div>
+    <div class="missing no-print hidden" id="missingBox"></div>
     <p class="statusmsg no-print hidden" id="saveMsg"></p>
     <p class="statusmsg no-print hidden" id="fitMsg"></p>
+    <p class="error no-print" id="sheetError" role="alert"></p>
     <p class="no-print" style="font-size:14px;color:var(--dim);margin:0 0 12px">印刷またはPDF保存は、ブラウザの印刷機能から行ってください（用紙はA4です）。</p>
     <div class="sheet-page" id="sheetPage" aria-label="お客様紹介シート"></div>
+    <div class="savebar no-print" id="saveBar">
+      <button type="button" class="btn-primary" id="confirmSaveBtn">この内容で集計シートに保存する</button>
+      <p class="bottomnote">保存すると、集計シート「インテーク集計」に1行追加されます</p>
+    </div>
   </div>
 </main>
 <nav class="secnav no-print" id="secNav" aria-label="セクション移動"></nav>
 </div>
+<div class="scrubber no-print" id="scrubber" aria-hidden="true"></div>
+<div class="scrubbubble no-print hidden" id="scrubBubble" aria-hidden="true"></div>
 <div id="measure" aria-hidden="true"></div>
 <div id="mm297" aria-hidden="true"></div>
 
@@ -251,6 +289,10 @@ var MED_ITEMS=[
 ];
 var ARRAY_KEYS=["rehab","visionSide","speechAids","hearingAidSide","utensils","toiletDay","toiletNight","dentureParts","dementiaSymptomList","mentalProblems"];
 
+/* localStorage helpers: storage may be unavailable, so every access is guarded */
+function lsGet(k){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
 function todayTokyo(){
   var parts=new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
   function g(t){for(var i=0;i<parts.length;i++) if(parts[i].type===t) return parts[i].value; return "";}
@@ -272,6 +314,8 @@ function emptyForm(){
   TEXT_KEYS.forEach(function(k){ f[k]=""; });
   ARRAY_KEYS.forEach(function(k){ f[k]=[]; });
   MED_ITEMS.forEach(function(m){ f[m[0]]=""; f[m[0]+"Detail"]=""; });
+  var staff=lsGet("akizakura-intake-staff");
+  if(staff){ f.staffName=staff.staffName||""; f.staffPhone=staff.staffPhone||""; }
   return f;
 }
 var form = emptyForm();
@@ -527,7 +571,7 @@ function openDetail(key,label){
     document.removeEventListener("keydown",onKey);
     if(r==="save"){ form.details[key]=ta.value.trim(); if(!form.details[key]) delete form.details[key]; }
     else if(r==="clear"){ delete form.details[key]; }
-    back.remove(); refreshDetailUI(key); updateNavFilled();
+    back.remove(); refreshDetailUI(key); updateNavFilled(); saveDraftSoon();
   }
   function onKey(e){ if(e.key==="Escape") close("cancel"); }
   back.addEventListener("click",function(e){ var b=e.target.closest("[data-r]"); if(b) close(b.dataset.r); else if(e.target===back) close("cancel"); });
@@ -787,18 +831,22 @@ var headerEl=document.querySelector("header.top");
 })();
 function isWide(){ return window.matchMedia("(min-width:1024px)").matches; }
 function scrollOffset(){ return headerEl.offsetHeight + (isWide()?0:navEl.offsetHeight) + 12; }
-function setHeaderVar(){ document.documentElement.style.setProperty("--hdr", headerEl.offsetHeight+"px"); }
-function jumpTo(n, focusEl){
+function setHeaderVar(){
+  document.documentElement.style.setProperty("--hdr", headerEl.offsetHeight+"px");
+  document.documentElement.style.setProperty("--navh", (isWide()?0:navEl.offsetHeight)+"px");
+}
+function jumpTo(n, focusEl, instant){
   var el=document.getElementById("sec-"+n); if(!el) return;
-  if(el.tagName==="DETAILS" && !el.open){ el.open=true; updateMedHint(); }
+  if(!instant && el.tagName==="DETAILS" && !el.open){ el.open=true; updateMedHint(); }
   var top=el.getBoundingClientRect().top + window.pageYOffset - scrollOffset();
-  window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
+  window.scrollTo({top:Math.max(0,top),behavior:instant?"auto":"smooth"});
   setActiveTab(n);
   if(focusEl) setTimeout(function(){ try{ focusEl.focus({preventScroll:true}); }catch(e){ focusEl.focus(); } }, 400);
 }
 var activeSec=0;
 function setActiveTab(n){
   if(n===activeSec) return; activeSec=n;
+  var dots=document.querySelectorAll("#scrubber .sdot"); for(var d=0;d<dots.length;d++) dots[d].classList.toggle("active", +dots[d].dataset.sec===n);
   var tabs=navEl.querySelectorAll(".tab");
   for(var i=0;i<tabs.length;i++){
     var on = +tabs[i].dataset.sec===n;
@@ -826,12 +874,17 @@ function updateNavFilled(){
 var scrollTick=false;
 window.addEventListener("scroll",function(){ if(scrollTick) return; scrollTick=true; requestAnimationFrame(function(){ scrollTick=false; updateActiveFromScroll(); }); },{passive:true});
 window.addEventListener("resize",function(){ setHeaderVar(); updateActiveFromScroll(); });
-formEl.addEventListener("input",function(){ updateNavFilled(); updateMedHint(); });
-formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")){ updateConditionals(); updateNavFilled(); updateMedHint(); } });
+formEl.addEventListener("input",function(e){
+  updateNavFilled(); updateMedHint();
+  var k=e.target.dataset && e.target.dataset.key;
+  if(k==="staffName"||k==="staffPhone") lsSet("akizakura-intake-staff",{staffName:form.staffName,staffPhone:form.staffPhone});
+  saveDraftSoon();
+});
+formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")){ updateConditionals(); updateNavFilled(); updateMedHint(); saveDraftSoon(); } });
 formEl.addEventListener("toggle",function(e){ if(e.target.id==="sec-6") updateMedHint(); },true);
 
 if(TEST_MODE){
-  document.getElementById("mainNotice").textContent="テストモードです。自由に入力して「集計シートへ保存する」を押してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、詳細を書き足せます。";
+  document.getElementById("mainNotice").textContent="テストモードです。自由に入力して、一番下の「紹介シートを確認して保存へ」から保存まで試してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、詳細を書き足せます。";
 }
 renderForm();
 setHeaderVar();
@@ -907,54 +960,89 @@ function fitSheet(){
   return chosen;
 }
 
-/* ---- Submit ---- */
+/* ---- Preview, confirm and save ---- */
 var submitBtn=document.getElementById("submitBtn");
+var confirmSaveBtn=document.getElementById("confirmSaveBtn");
 var errorEl=document.getElementById("formError");
-var bottomNote=document.getElementById("bottomNote");
+var sheetErrorEl=document.getElementById("sheetError");
 var sending=false;
-var SUBMIT_LABEL="集計シートへ保存する";
+var SAVE_LABEL="この内容で集計シートに保存する";
 var TIMEOUT_MS=20000;
 /* saved: null (not saved yet) or {snapshot, status:"ok"|"unknown"} */
 var saved=null;
 
 function snapshot(){ return JSON.stringify(form); }
-function showError(msg){ errorEl.textContent=msg; errorEl.classList.add("show"); errorEl.scrollIntoView({behavior:"smooth",block:"center"}); }
-function updateBottomNote(){
-  bottomNote.textContent = saved ? "この方の内容は保存済みです。もう一度押すと、新しい行を追加するか確認します" : "保存すると紹介シートが表示されます";
+function isDirty(){ return !(saved && saved.snapshot===snapshot()); }
+function inSheet(){ return document.body.classList.contains("sheet-mode"); }
+function showError(msg){
+  var el = inSheet() ? sheetErrorEl : errorEl;
+  el.textContent=msg; el.classList.add("show"); el.scrollIntoView({behavior:"smooth",block:"center"});
 }
+function clearErrors(){ [errorEl,sheetErrorEl].forEach(function(el){ el.classList.remove("show"); el.textContent=""; }); }
+function toast(msg){
+  var t=document.createElement("div"); t.className="toast no-print"; t.setAttribute("role","status"); t.textContent=msg;
+  document.body.appendChild(t); setTimeout(function(){ t.remove(); },2200);
+}
+
+/* Items the referral sheet usually needs. Missing ones are listed on the confirm screen; saving is not blocked (only the name is required). */
+var CHECK_KEYS=[["staffName","担当者"],["staffPhone","担当電話"],["name","氏名"],["furigana","フリガナ"],["gender","性別"],["birthDate","生年月日"],["address","住所"],
+  ["careLevel","要介護度"],["currentStatus","現状"],["consultantName","相談者氏名"],["consultantContact","相談者連絡先"],["desiredArea","希望エリア"],["desiredTiming","入居希望時期"]];
+function renderMissing(){
+  var box=document.getElementById("missingBox");
+  var miss=CHECK_KEYS.filter(function(p){ return !hasValue(form[p[0]]); });
+  if(!isDirty() || !miss.length){ box.classList.add("hidden"); box.innerHTML=""; return; }
+  box.innerHTML='<strong>未入力の項目があります</strong>（このまま保存もできます。押すとその項目へ移動します）<div class="mchips"></div>';
+  var wrap=box.querySelector(".mchips");
+  miss.forEach(function(p){
+    var b=document.createElement("button"); b.type="button"; b.className="mchip"; b.textContent=p[1]+(p[0]==="name"?"（必須）":"");
+    b.addEventListener("click",function(){ showForm(); jumpToField(p[0]); });
+    wrap.appendChild(b);
+  });
+  box.classList.remove("hidden");
+}
+function jumpToField(key){
+  var w=formEl.querySelector('[data-field="'+key+'"]'); if(!w) return;
+  var d=w.closest("details"); if(d && !d.open){ d.open=true; updateMedHint(); }
+  var top=w.getBoundingClientRect().top + window.pageYOffset - scrollOffset() - 8;
+  window.scrollTo({top:Math.max(0,top),behavior:"auto"});
+  w.classList.remove("flash"); void w.offsetWidth; w.classList.add("flash");
+  var input=w.querySelector("input,textarea"); if(input) setTimeout(function(){ try{ input.focus({preventScroll:true}); }catch(e){} },100);
+  updateActiveFromScroll();
+}
+
 function showSheet(mode){
   renderSheet();
+  clearErrors();
   var pill=document.getElementById("savePill"), msg=document.getElementById("saveMsg");
   pill.className="pill"; msg.className="statusmsg no-print hidden"; msg.textContent="";
   if(mode==="ok"){ pill.textContent="集計シートに保存しました"; }
-  else if(mode==="test"){
-    pill.classList.add("warn"); pill.textContent="テストモードのため保存していません";
-  }
+  else if(mode==="test"){ pill.classList.add("warn"); pill.textContent="テストモードのため保存していません"; }
   else if(mode==="unknown"){
     pill.classList.add("warn"); pill.textContent="保存を確認できませんでした";
     msg.className="statusmsg no-print warn";
     msg.textContent="送信はしましたが、集計シートに保存されたかを確認できませんでした。もう一度保存すると重複する場合があるため、まず閲覧権限のある方に集計シートを確認してもらってください。";
   }
-  else if(mode==="notsaved"){
-    pill.classList.add("plain"); pill.textContent="この内容は保存していません";
-    msg.className="statusmsg no-print warn";
-    msg.textContent="修正後の内容は集計シートに保存していません。集計シートには前回保存した内容が残っています。";
+  else { /* preview */
+    if(!saved){ pill.classList.add("plain"); pill.textContent="まだ保存していません"; }
+    else if(isDirty()){ pill.classList.add("warn"); pill.textContent="保存後に変更があります（未保存）"; }
+    else if(saved.status==="unknown"){ pill.classList.add("warn"); pill.textContent="保存を確認できませんでした（前回の送信）"; }
+    else pill.textContent = TEST_MODE ? "テストモードで保存済みの内容です" : "保存済みの内容です";
   }
-  else if(mode==="same"){
-    if(saved && saved.status==="unknown"){ pill.classList.add("warn"); pill.textContent="保存を確認できませんでした（前回の送信）"; }
-    else pill.textContent="保存済みの内容です（再送信していません）";
-  }
+  document.getElementById("saveBar").classList.toggle("hidden", !isDirty());
+  renderMissing();
   document.body.classList.add("sheet-mode");
   document.getElementById("formView").classList.add("hidden");
   document.getElementById("sheetView").classList.remove("hidden");
   window.scrollTo(0,0);
 }
+var formScrollY=0;
 function showForm(){
   document.body.classList.remove("sheet-mode");
   document.getElementById("sheetView").classList.add("hidden");
   document.getElementById("formView").classList.remove("hidden");
   setHeaderVar();
 }
+function openPreview(){ formScrollY=window.pageYOffset; showSheet("preview"); }
 
 function askResend(){
   return new Promise(function(resolve){
@@ -964,7 +1052,6 @@ function askResend(){
       '<p>もう一度保存すると、集計シートに<strong>新しい行が追加</strong>されます。前に保存した行は残るため、不要になった行は集計シート側で削除が必要です。</p>'+
       '<div class="mbtns">'+
         '<button type="button" class="btn-primary" data-r="resend">新しい行として保存する</button>'+
-        '<button type="button" class="btn" data-r="sheet">保存せず紹介シートだけ表示</button>'+
         '<button type="button" class="btn" data-r="cancel">キャンセル</button>'+
       '</div></div>';
     function close(r){ document.removeEventListener("keydown",onKey); back.remove(); resolve(r); }
@@ -976,56 +1063,179 @@ function askResend(){
   });
 }
 
+function afterSaved(status, mode){
+  saved={snapshot:snapshot(),status:status};
+  clearDraft();
+  showSheet(mode);
+}
 function doSend(){
   if(navigator.onLine===false){ showError("インターネットに接続されていません。接続を確認してから、もう一度保存してください。（まだ送信していません）"); return; }
-  if(TEST_MODE){
-    saved={snapshot:snapshot(),status:"ok"}; updateBottomNote(); showSheet("test"); return;
-  }
-  sending=true; submitBtn.disabled=true; submitBtn.textContent="保存しています…";
+  if(TEST_MODE){ afterSaved("ok","test"); return; }
+  sending=true; confirmSaveBtn.disabled=true; confirmSaveBtn.textContent="保存しています…";
   var snap=snapshot();
   var payload=buildPayload();
   var ctrl = ("AbortController" in window) ? new AbortController() : null;
   var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, TIMEOUT_MS) : null;
-  function done(){ if(timer) clearTimeout(timer); sending=false; submitBtn.disabled=false; submitBtn.textContent=SUBMIT_LABEL; }
-  /* text/plain keeps this a simple request (no preflight). Reading the reply requires the script to return JSON such as {"ok":true}. */
+  function done(){ if(timer) clearTimeout(timer); sending=false; confirmSaveBtn.disabled=false; confirmSaveBtn.textContent=SAVE_LABEL; }
+  /* text/plain keeps this a simple request (no preflight). The script replies {"ok":true} or {"ok":false,"error":...}. */
   fetch(ENDPOINT, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload), redirect:"follow", signal: ctrl?ctrl.signal:undefined})
     .then(function(res){ return res.text().then(function(t){ var j=null; try{ j=JSON.parse(t); }catch(e){} return {res:res,json:j}; }); })
     .then(function(r){
       done();
-      if(r.json && r.json.ok===true){ saved={snapshot:snap,status:"ok"}; updateBottomNote(); showSheet("ok"); }
-      else if(r.json && r.json.ok===false){
-        showError("集計シートへの保存に失敗しました（"+(r.json.error||"理由不明")+"）。時間をおいて、もう一度お試しください。");
-      }
-      else { saved={snapshot:snap,status:"unknown"}; updateBottomNote(); showSheet("unknown"); }
+      if(snapshot()!==snap){ /* edited while sending: keep the state honest */ }
+      if(r.json && r.json.ok===true){ saved={snapshot:snap,status:"ok"}; clearDraft(); showSheet("ok"); }
+      else if(r.json && r.json.ok===false){ showError("集計シートへの保存に失敗しました（"+(r.json.error||"理由不明")+"）。時間をおいて、もう一度お試しください。"); }
+      else { saved={snapshot:snap,status:"unknown"}; clearDraft(); showSheet("unknown"); }
     })
     .catch(function(){
       /* Network error, timeout or unreadable reply: the request may still have reached the sheet. */
-      done(); saved={snapshot:snap,status:"unknown"}; updateBottomNote(); showSheet("unknown");
+      done(); saved={snapshot:snap,status:"unknown"}; clearDraft(); showSheet("unknown");
     });
 }
 
-submitBtn.addEventListener("click", function(){
+submitBtn.addEventListener("click", openPreview);
+document.getElementById("previewBtnTop").addEventListener("click", openPreview);
+confirmSaveBtn.addEventListener("click", function(){
   if(sending) return;
-  errorEl.classList.remove("show"); errorEl.textContent="";
+  clearErrors();
   if(!form.name.trim()){
+    showForm(); jumpToField("name");
     errorEl.textContent="氏名を入力してください。"; errorEl.classList.add("show");
-    jumpTo(2, formEl.querySelector('[data-key="name"]'));
     return;
   }
   if(!saved){ doSend(); return; }
-  if(saved.snapshot===snapshot()){ showSheet("same"); return; }
-  askResend().then(function(r){
-    if(r==="resend") doSend();
-    else if(r==="sheet") showSheet("notsaved");
-  });
+  if(!isDirty()){ showSheet("preview"); return; }
+  askResend().then(function(r){ if(r==="resend") doSend(); });
 });
 document.getElementById("newBtn").addEventListener("click", function(){
-  form=emptyForm(); saved=null; updateBottomNote(); renderForm();
+  clearDraft();
+  form=emptyForm(); saved=null; renderForm();
   showForm(); activeSec=0; window.scrollTo(0,0); updateActiveFromScroll();
 });
 document.getElementById("backBtn").addEventListener("click", function(){
-  showForm(); window.scrollTo(0,0); activeSec=0; updateActiveFromScroll();
+  showForm(); window.scrollTo(0,formScrollY||0); activeSec=0; updateActiveFromScroll();
 });
+
+/* ---- Copy the referral sheet as plain text ---- */
+function sheetText(){
+  var C=columns(), F=C.F, age=computeAge(F.birthDate,F.referralDate), out=[];
+  function line(label,val){ if(val) out.push(label+"："+String(val).replace(/\n/g,"\n　")); }
+  out.push("高齢者住宅相談センター 秋桜 お客様紹介シート");
+  if(F.facilityName) out.push(F.facilityName+" 御中");
+  out.push("");
+  out.push("大変お世話になっております。秋桜の"+F.staffName+"でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。");
+  out.push("");
+  out.push("ご紹介日："+fmtJP(F.referralDate));
+  out.push(""); out.push("【ご入居希望者様】");
+  line("フリガナ",F.furigana); line("氏名",F.name);
+  line("生年月日",withD(fmtJP(F.birthDate),"birthDate")); line("性別",F.gender); if(age!=null) line("年齢",age+"歳");
+  line("住所",F.address);
+  line("要介護度（負担割合）",joinT([F.careLevel,F.costShare?"負担割合"+F.costShare:""],"　"));
+  line("既往歴と経過",C.history); line("認知症状の状況",C.dementiaSymptoms); line("医療依存",C.medDependency);
+  var other=composeSheetOther(); if(other){ out.push("その他："); other.split("\n").forEach(function(l){ out.push("　"+l.replace(/^　/,"　")); }); }
+  out.push(""); out.push("【相談者情報】");
+  line("フリガナ",F.consultantFurigana);
+  line("氏名（続柄）",F.consultantName?F.consultantName+(F.consultantRelation?"（"+F.consultantRelation+"）":""):"");
+  line("住所",F.consultantAddress);
+  var co=composeConsultantOther(); if(co){ out.push("その他："); co.split("\n").forEach(function(l){ out.push("　"+l); }); }
+  out.push("");
+  out.push("※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。");
+  out.push("");
+  out.push("高齢者住宅相談センター 秋桜"); out.push("担当："+F.staffName); out.push("TEL："+F.staffPhone); out.push("メール：info@goodbyinc.com");
+  return out.join("\n");
+}
+function copyText(text){
+  function fallback(){
+    var ta=document.createElement("textarea"); ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); var ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); return ok;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).then(function(){ return true; },function(){ return fallback(); });
+  }
+  return Promise.resolve(fallback());
+}
+document.getElementById("copyBtn").addEventListener("click", function(){
+  copyText(sheetText()).then(function(ok){ toast(ok ? "紹介シートの内容をコピーしました" : "コピーできませんでした"); });
+});
+
+/* ---- Draft autosave (this device only; removed after saving, on new entry, or after 24 hours) ---- */
+var DRAFT_KEY = TEST_MODE ? "akizakura-intake-draft-test" : "akizakura-intake-draft";
+var DRAFT_TTL = 24*60*60*1000;
+var draftTimer=null;
+function formHasContent(f){
+  for(var k in f){
+    if(!f.hasOwnProperty(k) || k==="referralDate" || k==="staffName" || k==="staffPhone") continue;
+    if(k==="details"){ if(Object.keys(f.details||{}).length) return true; continue; }
+    if(hasValue(f[k])) return true;
+  }
+  return false;
+}
+function saveDraftSoon(){
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(function(){
+    if(formHasContent(form) && isDirty()) lsSet(DRAFT_KEY,{v:1,at:Date.now(),form:form});
+    else lsDel(DRAFT_KEY);
+  },400);
+}
+function clearDraft(){ clearTimeout(draftTimer); lsDel(DRAFT_KEY); }
+function fmtTime(ms){
+  var parts=new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ms));
+  function g(t){for(var i=0;i<parts.length;i++) if(parts[i].type===t) return parts[i].value; return "";}
+  return g("month")+"月"+g("day")+"日 "+g("hour")+":"+g("minute");
+}
+function restoreDraftPrompt(){
+  var d=lsGet(DRAFT_KEY);
+  if(!d || !d.form) return;
+  if(!d.at || Date.now()-d.at>DRAFT_TTL || !formHasContent(d.form)){ lsDel(DRAFT_KEY); return; }
+  var who = d.form.name ? "氏名："+d.form.name : "氏名は未入力";
+  var back=document.createElement("div"); back.className="modal-back no-print";
+  back.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="rTitle">'+
+    '<h3 id="rTitle">入力途中の内容があります</h3>'+
+    '<p>'+esc(fmtTime(d.at))+'の時点の内容です（'+esc(who)+'）。続きから入力しますか。</p>'+
+    '<div class="mbtns">'+
+      '<button type="button" class="btn-primary" data-r="resume">続きから入力する</button>'+
+      '<button type="button" class="btn" data-r="discard">破棄して新しく始める</button>'+
+    '</div></div>';
+  back.addEventListener("click",function(e){
+    var b=e.target.closest("[data-r]"); if(!b) return;
+    if(b.dataset.r==="resume"){
+      var f=emptyForm(), src=d.form;
+      for(var k in src){ if(src.hasOwnProperty(k) && k in f) f[k]=src[k]; }
+      ARRAY_KEYS.forEach(function(k){ if(!Array.isArray(f[k])) f[k]=[]; });
+      if(!f.details || typeof f.details!=="object") f.details={};
+      form=f; renderForm(); updateActiveFromScroll();
+      toast("入力途中の内容を読み込みました");
+    } else { lsDel(DRAFT_KEY); }
+    back.remove();
+  });
+  document.body.appendChild(back);
+}
+
+/* ---- Right-edge slider: drag to move between sections ---- */
+(function buildScrubber(){
+  var sc=document.getElementById("scrubber"), bubble=document.getElementById("scrubBubble");
+  SECTIONS.forEach(function(s){ var d=document.createElement("span"); d.className="sdot"; d.dataset.sec=s.n; d.textContent=s.n; sc.appendChild(d); });
+  var dragging=false, last=0;
+  function pick(clientY){
+    var r=sc.getBoundingClientRect();
+    var idx=Math.floor((clientY-r.top)/r.height*SECTIONS.length);
+    idx=Math.max(0,Math.min(SECTIONS.length-1,idx));
+    var s=SECTIONS[idx];
+    bubble.textContent=s.n+"　"+s.label;
+    bubble.style.top=Math.max(r.top,Math.min(r.bottom,clientY))+"px";
+    if(s.n!==last){ last=s.n; jumpTo(s.n,null,true); try{ navigator.vibrate&&navigator.vibrate(5); }catch(e){} }
+  }
+  sc.addEventListener("pointerdown",function(e){
+    dragging=true; last=0; sc.classList.add("dragging"); bubble.classList.remove("hidden");
+    try{ sc.setPointerCapture(e.pointerId); }catch(_){}
+    pick(e.clientY); e.preventDefault();
+  });
+  sc.addEventListener("pointermove",function(e){ if(dragging){ pick(e.clientY); e.preventDefault(); } });
+  function end(){ if(!dragging) return; dragging=false; sc.classList.remove("dragging"); bubble.classList.add("hidden"); updateActiveFromScroll(); }
+  sc.addEventListener("pointerup",end); sc.addEventListener("pointercancel",end); sc.addEventListener("lostpointercapture",end);
+})();
+activeSec=0; updateActiveFromScroll();
+restoreDraftPrompt();
 </script>
 </body>
 </html>
