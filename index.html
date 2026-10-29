@@ -70,6 +70,16 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 .choice{min-height:48px;border-radius:999px;border:1px solid var(--border);background:var(--surface);padding:0 16px;font-size:16px;color:var(--text);cursor:pointer;font-family:inherit}
 .choice.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700}
 @media (prefers-color-scheme: dark){ .choice.active{color:#10201a} }
+/* Long-press details */
+.lptarget{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.choice{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.pressing{outline:3px solid var(--accent);outline-offset:3px;border-radius:var(--radius);transition:outline-color .1s}
+.detailbtn{margin-left:8px;min-height:28px;padding:0 10px;border-radius:999px;border:1px dashed var(--border);background:transparent;color:var(--dim);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;vertical-align:middle}
+.detailbtn.has{border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.detailchip{display:block;width:100%;margin-top:8px;text-align:left;border:0;border-left:3px solid var(--accent);background:var(--accent-soft);color:var(--text);border-radius:8px;padding:8px 12px;font-size:14px;line-height:1.6;cursor:pointer;font-family:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
+.detailchip b{color:var(--accent);margin-right:6px}
+.modal textarea{width:100%;margin:0 0 14px}
+.modal .mval{font-size:13px;color:var(--dim);margin:-4px 0 12px}
 .error{margin-top:24px;border-radius:var(--radius);background:var(--warn-soft);padding:12px 16px;font-size:15px;display:none}
 .error.show{display:block}
 .notice{margin-top:16px;font-size:13px;color:var(--dim);line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
@@ -136,7 +146,7 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 <main class="wrap">
   <!-- FORM VIEW -->
   <div id="formView">
-    <div class="notice" id="mainNotice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
+    <div class="notice" id="mainNotice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、その項目の詳細を書き足せます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
     <form id="intakeForm" novalidate></form>
     <p class="error" id="formError" role="alert"></p>
     <div class="spacer"></div>
@@ -194,7 +204,7 @@ function todayTokyo(){
   return g("year")+"-"+g("month")+"-"+g("day");
 }
 function emptyForm(){
-  return {referralDate:todayTokyo(),staffName:"",staffPhone:"",facilityName:"",name:"",furigana:"",gender:"",birthDate:"",address:"",contact:"",careLevel:"",costShare:"",welfare:"",currentStatus:"",currentStatusDetail:"",currentServices:"",paralysis:"",paralysisDetail:"",vision:"",hearing:"",speech:"",rehab:[],adlMeal:"",adlToilet:"",adlBath:"",adlDress:"",adlTransfer:"",mobility:"",adlSleep:"",adlOral:"",dementiaType:"",dementiaSymptoms:"",comprehension:"",medicalDependency:"",medicalProcedures:"",medicalHistory:"",consultantName:"",consultantFurigana:"",consultantRelation:"",consultantAddress:"",consultantContact:"",familyStructure:"",consultantOther:"",desiredArea:"",desiredFacilityType:"",desiredTiming:"",initialCostLimit:"",monthlyCostLimit:"",facilityRequests:"",notes:""};
+  return {referralDate:todayTokyo(),staffName:"",staffPhone:"",facilityName:"",name:"",furigana:"",gender:"",birthDate:"",address:"",contact:"",careLevel:"",costShare:"",welfare:"",currentStatus:"",currentStatusDetail:"",currentServices:"",paralysis:"",paralysisDetail:"",vision:"",hearing:"",speech:"",rehab:[],adlMeal:"",adlToilet:"",adlBath:"",adlDress:"",adlTransfer:"",mobility:"",adlSleep:"",adlOral:"",dementiaType:"",dementiaSymptoms:"",comprehension:"",medicalDependency:"",medicalProcedures:"",medicalHistory:"",consultantName:"",consultantFurigana:"",consultantRelation:"",consultantAddress:"",consultantContact:"",familyStructure:"",consultantOther:"",desiredArea:"",desiredFacilityType:"",desiredTiming:"",initialCostLimit:"",monthlyCostLimit:"",facilityRequests:"",notes:"",details:{}};
 }
 var form = emptyForm();
 
@@ -208,123 +218,210 @@ function fmtReceived(d){
   return g("year")+"/"+g("month")+"/"+g("day")+" "+g("hour")+":"+g("minute");
 }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-function paralysisCell(){ var b=(form.paralysis||"").trim(), d=(form.paralysisDetail||"").trim(); if(b&&d) return b+"（"+d+"）"; return b||d; }
+/* Details added by long-press are appended to the item's value as "value（detail）". No new sheet columns. */
+function detailOf(key){ return ((form.details||{})[key]||"").trim(); }
+function withD(base,key){ var b=String(base==null?"":base).trim(), d=detailOf(key); if(!d) return b; return b ? b+"（"+d+"）" : d; }
+var RAW_KEYS={referralDate:1,birthDate:1,rehab:1,details:1};
+function outForm(){
+  var F={};
+  for(var k in form){ if(!form.hasOwnProperty(k)) continue; F[k] = RAW_KEYS[k] ? form[k] : withD(form[k],k); }
+  F.rehabText = withD(form.rehab.join("、"),"rehab");
+  return F;
+}
+function paralysisCell(){ var F=outForm(); var b=(F.paralysis||"").trim(), d=(F.paralysisDetail||"").trim(); if(b&&d) return b+"（"+d+"）"; return b||d; }
 
 function buildPayload(){
-  var age=computeAge(form.birthDate, form.referralDate);
+  var F=outForm();
+  var age=computeAge(F.birthDate, F.referralDate);
   var obj={};
   obj["受付日時"]=fmtReceived(new Date());
-  obj["ご紹介日"]=fmtSlash(form.referralDate);
-  obj["担当者"]=form.staffName;
-  obj["担当電話"]=form.staffPhone;
-  obj["紹介先施設名"]=form.facilityName;
-  obj["氏名"]=form.name;
-  obj["フリガナ"]=form.furigana;
-  obj["性別"]=form.gender;
-  obj["生年月日"]=fmtSlash(form.birthDate);
+  obj["ご紹介日"]=fmtSlash(F.referralDate);
+  obj["担当者"]=F.staffName;
+  obj["担当電話"]=F.staffPhone;
+  obj["紹介先施設名"]=F.facilityName;
+  obj["氏名"]=F.name;
+  obj["フリガナ"]=F.furigana;
+  obj["性別"]=F.gender;
+  obj["生年月日"]=withD(fmtSlash(F.birthDate),"birthDate");
   obj["年齢"]=age==null?"":String(age);
-  obj["住所"]=form.address;
-  obj["連絡先"]=form.contact;
-  obj["要介護度"]=form.careLevel;
-  obj["負担割合"]=form.costShare;
-  obj["生活保護"]=form.welfare;
-  obj["現状"]=form.currentStatus;
-  obj["現状の詳細"]=form.currentStatusDetail;
-  obj["利用中のサービス"]=form.currentServices;
+  obj["住所"]=F.address;
+  obj["連絡先"]=F.contact;
+  obj["要介護度"]=F.careLevel;
+  obj["負担割合"]=F.costShare;
+  obj["生活保護"]=F.welfare;
+  obj["現状"]=F.currentStatus;
+  obj["現状の詳細"]=F.currentStatusDetail;
+  obj["利用中のサービス"]=F.currentServices;
   obj["麻痺"]=paralysisCell();
-  obj["視力"]=form.vision;
-  obj["聴力"]=form.hearing;
-  obj["会話"]=form.speech;
-  obj["リハビリ"]=form.rehab.join("、");
-  obj["食事"]=form.adlMeal;
-  obj["排泄"]=form.adlToilet;
-  obj["入浴"]=form.adlBath;
-  obj["更衣"]=form.adlDress;
-  obj["移乗"]=form.adlTransfer;
-  obj["移動"]=form.mobility;
-  obj["睡眠"]=form.adlSleep;
-  obj["口腔ケア"]=form.adlOral;
-  obj["認知症の種類"]=form.dementiaType;
-  obj["認知症状の状況"]=form.dementiaSymptoms;
-  obj["理解力"]=form.comprehension;
-  obj["医療依存"]=form.medicalDependency;
-  obj["医療処置"]=form.medicalProcedures;
-  obj["既往歴と経過"]=form.medicalHistory;
-  obj["相談者氏名"]=form.consultantName;
-  obj["相談者フリガナ"]=form.consultantFurigana;
-  obj["相談者続柄"]=form.consultantRelation;
-  obj["相談者住所"]=form.consultantAddress;
-  obj["相談者連絡先"]=form.consultantContact;
-  obj["家族構成"]=form.familyStructure;
-  obj["相談者その他"]=form.consultantOther;
-  obj["希望エリア"]=form.desiredArea;
-  obj["希望施設種類"]=form.desiredFacilityType;
-  obj["入居希望時期"]=form.desiredTiming;
-  obj["入居時費用上限"]=form.initialCostLimit;
-  obj["月額費用上限"]=form.monthlyCostLimit;
-  obj["施設への要望"]=form.facilityRequests;
-  obj["備考"]=form.notes;
+  obj["視力"]=F.vision;
+  obj["聴力"]=F.hearing;
+  obj["会話"]=F.speech;
+  obj["リハビリ"]=F.rehabText;
+  obj["食事"]=F.adlMeal;
+  obj["排泄"]=F.adlToilet;
+  obj["入浴"]=F.adlBath;
+  obj["更衣"]=F.adlDress;
+  obj["移乗"]=F.adlTransfer;
+  obj["移動"]=F.mobility;
+  obj["睡眠"]=F.adlSleep;
+  obj["口腔ケア"]=F.adlOral;
+  obj["認知症の種類"]=F.dementiaType;
+  obj["認知症状の状況"]=F.dementiaSymptoms;
+  obj["理解力"]=F.comprehension;
+  obj["医療依存"]=F.medicalDependency;
+  obj["医療処置"]=F.medicalProcedures;
+  obj["既往歴と経過"]=F.medicalHistory;
+  obj["相談者氏名"]=F.consultantName;
+  obj["相談者フリガナ"]=F.consultantFurigana;
+  obj["相談者続柄"]=F.consultantRelation;
+  obj["相談者住所"]=F.consultantAddress;
+  obj["相談者連絡先"]=F.consultantContact;
+  obj["家族構成"]=F.familyStructure;
+  obj["相談者その他"]=F.consultantOther;
+  obj["希望エリア"]=F.desiredArea;
+  obj["希望施設種類"]=F.desiredFacilityType;
+  obj["入居希望時期"]=F.desiredTiming;
+  obj["入居時費用上限"]=F.initialCostLimit;
+  obj["月額費用上限"]=F.monthlyCostLimit;
+  obj["施設への要望"]=F.facilityRequests;
+  obj["備考"]=F.notes;
   return obj;
 }
 
 function composeSheetOther(){
+  var F=outForm();
   var lines=[];
-  var status=[form.currentStatus,form.currentStatusDetail].map(function(v){return (v||"").trim();}).filter(Boolean).join(" ");
+  var status=[F.currentStatus,F.currentStatusDetail].map(function(v){return (v||"").trim();}).filter(Boolean).join(" ");
   if(status) lines.push("現状："+status);
-  if(form.welfare.trim()) lines.push("生活保護："+form.welfare.trim());
-  var adl=[["食事",form.adlMeal],["排泄",form.adlToilet],["入浴",form.adlBath],["更衣",form.adlDress],["移乗",form.adlTransfer],["移動",form.mobility],["睡眠",form.adlSleep],["口腔ケア",form.adlOral]];
+  if(F.welfare.trim()) lines.push("生活保護："+F.welfare.trim());
+  var adl=[["食事",F.adlMeal],["排泄",F.adlToilet],["入浴",F.adlBath],["更衣",F.adlDress],["移乗",F.adlTransfer],["移動",F.mobility],["睡眠",F.adlSleep],["口腔ケア",F.adlOral]];
   var adlText=adl.filter(function(p){return p[1].trim();}).map(function(p){return p[0]+" "+p[1].trim();}).join("、");
   if(adlText) lines.push("日常生活援助："+adlText);
   var body=[]; var par=paralysisCell(); if(par) body.push("麻痺 "+par);
-  if(form.vision.trim()) body.push("視力 "+form.vision.trim());
-  if(form.hearing.trim()) body.push("聴力 "+form.hearing.trim());
-  if(form.speech.trim()) body.push("会話 "+form.speech.trim());
-  if(form.rehab.length) body.push("リハビリ "+form.rehab.join("、"));
+  if(F.vision.trim()) body.push("視力 "+F.vision.trim());
+  if(F.hearing.trim()) body.push("聴力 "+F.hearing.trim());
+  if(F.speech.trim()) body.push("会話 "+F.speech.trim());
+  if(F.rehabText) body.push("リハビリ "+F.rehabText);
   if(body.length) lines.push("身体状況："+body.join("、"));
-  if(form.dementiaType.trim()) lines.push("認知症の種類："+form.dementiaType.trim());
-  if(form.comprehension.trim()) lines.push("理解力："+form.comprehension.trim());
-  if(form.medicalProcedures.trim()) lines.push("医療処置："+form.medicalProcedures.trim());
-  if(form.currentServices.trim()) lines.push("利用中のサービス："+form.currentServices.trim());
+  if(F.dementiaType.trim()) lines.push("認知症の種類："+F.dementiaType.trim());
+  if(F.comprehension.trim()) lines.push("理解力："+F.comprehension.trim());
+  if(F.medicalProcedures.trim()) lines.push("医療処置："+F.medicalProcedures.trim());
+  if(F.currentServices.trim()) lines.push("利用中のサービス："+F.currentServices.trim());
   var wishes=[];
-  if(form.desiredArea.trim()) wishes.push("エリア "+form.desiredArea.trim());
-  if(form.desiredFacilityType.trim()) wishes.push("施設種類 "+form.desiredFacilityType.trim());
-  if(form.desiredTiming.trim()) wishes.push("時期 "+form.desiredTiming.trim());
-  if(form.initialCostLimit.trim()) wishes.push("入居時費用 "+form.initialCostLimit.trim()+"まで");
-  if(form.monthlyCostLimit.trim()) wishes.push("月額費用 "+form.monthlyCostLimit.trim()+"まで");
-  if(form.facilityRequests.trim()) wishes.push("施設への要望 "+form.facilityRequests.trim());
+  if(F.desiredArea.trim()) wishes.push("エリア "+F.desiredArea.trim());
+  if(F.desiredFacilityType.trim()) wishes.push("施設種類 "+F.desiredFacilityType.trim());
+  if(F.desiredTiming.trim()) wishes.push("時期 "+F.desiredTiming.trim());
+  if(F.initialCostLimit.trim()) wishes.push("入居時費用 "+F.initialCostLimit.trim()+"まで");
+  if(F.monthlyCostLimit.trim()) wishes.push("月額費用 "+F.monthlyCostLimit.trim()+"まで");
+  if(F.facilityRequests.trim()) wishes.push("施設への要望 "+F.facilityRequests.trim());
   if(wishes.length) lines.push("ご希望条件："+wishes.join("、"));
-  if(form.notes.trim()) lines.push("備考："+form.notes.trim());
+  if(F.notes.trim()) lines.push("備考："+F.notes.trim());
   return lines.join("\n");
 }
 function composeConsultantOther(){
+  var F=outForm();
   var lines=[];
-  if(form.consultantContact.trim()) lines.push("連絡先："+form.consultantContact.trim());
-  if(form.familyStructure.trim()) lines.push("家族構成："+form.familyStructure.trim());
-  if(form.consultantOther.trim()) lines.push(form.consultantOther.trim());
+  if(F.consultantContact.trim()) lines.push("連絡先："+F.consultantContact.trim());
+  if(F.familyStructure.trim()) lines.push("家族構成："+F.familyStructure.trim());
+  if(F.consultantOther.trim()) lines.push(F.consultantOther.trim());
   return lines.join("\n");
 }
 
 /* ---- Form rendering ---- */
 var formEl=document.getElementById("intakeForm");
+/* Fields in section 1 (date, staff, facility) are used in the greeting and signature, so they take no details. */
+var NO_DETAIL={referralDate:1,staffName:1,staffPhone:1,facilityName:1};
+var LP_MS=500;
+function detailBtnHtml(key,label){ return NO_DETAIL[key] ? "" : '<button type="button" class="detailbtn" data-detail-btn="'+key+'" aria-label="'+esc(label)+'の詳細を書く">＋詳細</button>'; }
+function addDetailUI(wrap,key,label,pressEl){
+  if(NO_DETAIL[key]) return wrap;
+  wrap.dataset.detailKey=key; wrap.dataset.detailLabel=label;
+  var chip=document.createElement("button"); chip.type="button"; chip.className="detailchip hidden"; chip.dataset.detailChip=key;
+  chip.addEventListener("click",function(){ openDetail(key,label); });
+  wrap.appendChild(chip);
+  var btn=wrap.querySelector('[data-detail-btn]');
+  if(btn) btn.addEventListener("click",function(e){ e.preventDefault(); e.stopPropagation(); openDetail(key,label); });
+  attachLongPress(pressEl||wrap,key,label,wrap);
+  refreshDetailUI(key);
+  return wrap;
+}
+function attachLongPress(el,key,label,ring){
+  var timer=null, ringTimer=null, sx=0, sy=0, fired=false;
+  function clear(){ clearTimeout(timer); clearTimeout(ringTimer); timer=null; ring.classList.remove("pressing"); }
+  el.addEventListener("pointerdown",function(e){
+    if(e.button>0) return;
+    var t=e.target;
+    if(t.closest("input,textarea,select,[data-detail-btn],.detailchip")) return; /* keep native long-press (paste) in text boxes */
+    fired=false; sx=e.clientX; sy=e.clientY;
+    ringTimer=setTimeout(function(){ ring.classList.add("pressing"); },150);
+    timer=setTimeout(function(){ fired=true; clear(); try{ navigator.vibrate&&navigator.vibrate(15); }catch(_){} openDetail(key,label); },LP_MS);
+  });
+  el.addEventListener("pointermove",function(e){ if(timer && (Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10)) clear(); });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(ev){ el.addEventListener(ev,function(){ if(timer) clear(); }); });
+  el.addEventListener("click",function(e){ if(fired){ e.preventDefault(); e.stopPropagation(); fired=false; } },true);
+  el.addEventListener("contextmenu",function(e){ if(!e.target.closest("input,textarea")) e.preventDefault(); });
+}
+function refreshDetailUI(key){
+  var d=detailOf(key);
+  var chip=formEl.querySelector('[data-detail-chip="'+key+'"]');
+  var btn=formEl.querySelector('[data-detail-btn="'+key+'"]');
+  if(chip){ if(d){ chip.innerHTML='<b>詳細</b>'+esc(d); chip.classList.remove("hidden"); } else { chip.innerHTML=""; chip.classList.add("hidden"); } }
+  if(btn){ btn.classList.toggle("has",!!d); btn.textContent = d ? "詳細あり" : "＋詳細"; }
+}
+function currentValueText(key){
+  var v=form[key]; if(Array.isArray(v)) v=v.join("、");
+  if(key==="birthDate") v=fmtJP(v);
+  return String(v||"").trim();
+}
+function openDetail(key,label){
+  if(document.querySelector(".modal-back")) return;
+  var cur=detailOf(key), val=currentValueText(key);
+  var back=document.createElement("div"); back.className="modal-back no-print";
+  back.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="dTitle">'+
+    '<h3 id="dTitle">'+esc(label)+'の詳細</h3>'+
+    '<p class="mval">選択または入力中の内容：'+(val?esc(val):'（未入力）')+'</p>'+
+    '<textarea rows="4" aria-label="'+esc(label)+'の詳細" placeholder="例：具体的な状況、時間帯、注意点など"></textarea>'+
+    '<div class="mbtns">'+
+      '<button type="button" class="btn-primary" data-r="save">詳細を保存</button>'+
+      (cur?'<button type="button" class="btn" data-r="clear">詳細を消す</button>':'')+
+      '<button type="button" class="btn" data-r="cancel">キャンセル</button>'+
+    '</div></div>';
+  var ta=back.querySelector("textarea"); ta.value=cur;
+  function close(r){
+    document.removeEventListener("keydown",onKey);
+    if(r==="save"){ form.details[key]=ta.value.trim(); if(!form.details[key]) delete form.details[key]; }
+    else if(r==="clear"){ delete form.details[key]; }
+    back.remove(); refreshDetailUI(key); updateNavFilled();
+  }
+  function onKey(e){ if(e.key==="Escape") close("cancel"); }
+  back.addEventListener("click",function(e){ var b=e.target.closest("[data-r]"); if(b) close(b.dataset.r); else if(e.target===back) close("cancel"); });
+  document.addEventListener("keydown",onKey);
+  document.body.appendChild(back);
+  setTimeout(function(){ ta.focus(); },50);
+}
+
 function textField(label,key,opts){
   opts=opts||{};
   var wrap=document.createElement("div"); if(opts.full) wrap.className="full";
   var lab=document.createElement("label"); lab.className="lbl";
-  lab.innerHTML='<span class="lbltext">'+esc(label)+(opts.hint?'<span class="hint">'+esc(opts.hint)+'</span>':'')+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+'</span>';
+  lab.innerHTML='<span class="lbltext">'+esc(label)+(opts.hint?'<span class="hint">'+esc(opts.hint)+'</span>':'')+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+detailBtnHtml(key,label)+'</span>';
   var input=document.createElement("input");
   input.type=opts.type||"text"; if(opts.inputMode) input.setAttribute("inputmode",opts.inputMode);
   input.setAttribute("aria-label",label); input.value=form[key]||"";
   input.addEventListener("input",function(){ form[key]=input.value; if(key==="birthDate"||key==="referralDate") updateAgeHints(); });
   input.dataset.key=key;
-  lab.appendChild(input); wrap.appendChild(lab); return wrap;
+  lab.appendChild(input); wrap.appendChild(lab);
+  lab.querySelector(".lbltext").classList.add("lptarget");
+  return addDetailUI(wrap,key,label,lab.querySelector(".lbltext"));
 }
 function dateField(label,key){
   var wrap=document.createElement("div");
   var lab=document.createElement("label"); lab.className="lbl";
-  lab.innerHTML='<span class="lbltext">'+esc(label)+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+'</span>';
+  lab.innerHTML='<span class="lbltext lptarget">'+esc(label)+(key==="birthDate"?'<span class="hint" data-age-hint></span>':'')+detailBtnHtml(key,label)+'</span>';
   var input=document.createElement("input"); input.type="date"; input.setAttribute("aria-label",label); input.value=form[key]||""; input.dataset.key=key;
   input.addEventListener("input",function(){ form[key]=input.value; updateAgeHints(); });
-  lab.appendChild(input); wrap.appendChild(lab); return wrap;
+  lab.appendChild(input); wrap.appendChild(lab);
+  return addDetailUI(wrap,key,label,lab.querySelector(".lbltext"));
 }
 function areaField(label,key,rows){
   var wrap=document.createElement("div"); wrap.className="full";
@@ -337,7 +434,7 @@ function areaField(label,key,rows){
 function choiceField(label,options,key,multi){
   var wrap=document.createElement("div");
   var fs=document.createElement("fieldset");
-  var lg=document.createElement("legend"); lg.textContent=label; fs.appendChild(lg);
+  var lg=document.createElement("legend"); lg.className="lptarget"; lg.innerHTML=esc(label)+detailBtnHtml(key,label); fs.appendChild(lg);
   var div=document.createElement("div"); div.className="choices"; div.setAttribute("role", multi?"group":"radiogroup"); div.setAttribute("aria-label",label);
   options.forEach(function(opt){
     var btn=document.createElement("button"); btn.type="button"; btn.className="choice"; btn.textContent=opt;
@@ -354,7 +451,8 @@ function choiceField(label,options,key,multi){
     });
     sync(); div.appendChild(btn);
   });
-  fs.appendChild(div); wrap.appendChild(fs); return wrap;
+  fs.appendChild(div); wrap.appendChild(fs);
+  return addDetailUI(wrap,key,label,fs);
 }
 function section(num,title,children){
   var s=document.createElement("section"); s.className="block"; s.id="sec-"+num;
@@ -499,7 +597,7 @@ function updateActiveFromScroll(){
 function hasValue(v){ return Array.isArray(v) ? v.length>0 : String(v||"").trim()!==""; }
 function updateNavFilled(){
   var tabs=navEl.querySelectorAll(".tab");
-  SECTIONS.forEach(function(s,i){ tabs[i].classList.toggle("filled", s.keys.some(function(k){ return hasValue(form[k]); })); });
+  SECTIONS.forEach(function(s,i){ tabs[i].classList.toggle("filled", s.keys.some(function(k){ return hasValue(form[k]) || !!detailOf(k); })); });
 }
 var scrollTick=false;
 window.addEventListener("scroll",function(){ if(scrollTick) return; scrollTick=true; requestAnimationFrame(function(){ scrollTick=false; updateActiveFromScroll(); }); },{passive:true});
@@ -508,7 +606,7 @@ formEl.addEventListener("input",updateNavFilled);
 formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")) updateNavFilled(); });
 
 if(TEST_MODE){
-  document.getElementById("mainNotice").textContent="テストモードです。自由に入力して「集計シートへ保存する」を押してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。";
+  document.getElementById("mainNotice").textContent="テストモードです。自由に入力して「集計シートへ保存する」を押してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、詳細を書き足せます。";
 }
 renderForm();
 setHeaderVar();
@@ -519,35 +617,36 @@ function row(label,value,multiline){
   return '<tr><th>'+esc(label)+'</th><td colspan="5"'+(multiline?' style="white-space:pre-wrap"':'')+'>'+esc(value||"")+(value?"":"　")+'</td></tr>';
 }
 function renderSheet(){
-  var age=computeAge(form.birthDate, form.referralDate);
-  var careText=[form.careLevel, form.costShare?("負担割合"+form.costShare):""].filter(Boolean).join("　");
-  var consultantNameText=form.consultantName? form.consultantName+(form.consultantRelation?("（"+form.consultantRelation+"）"):"") : "";
+  var F=outForm();
+  var age=computeAge(F.birthDate, F.referralDate);
+  var careText=[F.careLevel, F.costShare?("負担割合"+F.costShare):""].filter(Boolean).join("　");
+  var consultantNameText=F.consultantName? F.consultantName+(F.consultantRelation?("（"+F.consultantRelation+"）"):"") : "";
   var html='';
   html+='<h2 style="text-align:center;font-weight:700;font-size:1.4545em;line-height:1.4;margin:0">高齢者住宅相談センター 秋桜 お客様紹介シート</h2>';
-  if(form.facilityName) html+='<p style="font-size:1.0909em;margin:8px 0 0">'+esc(form.facilityName)+' 御中</p>';
-  html+='<p style="font-size:1em;line-height:1.65;margin-bottom:0;margin-top:'+(form.facilityName?"4px":"8px")+'">大変お世話になっております。秋桜の'+esc(form.staffName)+'でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。</p>';
-  html+='<p style="text-align:right;font-size:1em;margin:5px 0 0">ご紹介日：'+esc(fmtJP(form.referralDate))+'</p>';
+  if(F.facilityName) html+='<p style="font-size:1.0909em;margin:8px 0 0">'+esc(F.facilityName)+' 御中</p>';
+  html+='<p style="font-size:1em;line-height:1.65;margin-bottom:0;margin-top:'+(F.facilityName?"4px":"8px")+'">大変お世話になっております。秋桜の'+esc(F.staffName)+'でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。</p>';
+  html+='<p style="text-align:right;font-size:1em;margin:5px 0 0">ご紹介日：'+esc(fmtJP(F.referralDate))+'</p>';
   html+='<h3 style="font-size:1.1364em;font-weight:700;margin:9px 0 0">ご入居希望者様</h3>';
   html+='<table style="margin-top:4px"><tbody>';
-  html+=row("フリガナ",form.furigana);
-  html+=row("氏名",form.name);
-  html+='<tr><th>生年月日</th><td>'+esc(fmtJP(form.birthDate)||"　")+'</td><th style="width:10%">性別</th><td style="width:14%">'+esc(form.gender||"　")+'</td><th style="width:10%">年齢</th><td style="width:14%">'+(age!=null?age+"歳":"　")+'</td></tr>';
-  html+=row("住所",form.address);
+  html+=row("フリガナ",F.furigana);
+  html+=row("氏名",F.name);
+  html+='<tr><th>生年月日</th><td>'+esc(withD(fmtJP(F.birthDate),"birthDate")||"　")+'</td><th style="width:10%">性別</th><td style="width:14%">'+esc(F.gender||"　")+'</td><th style="width:10%">年齢</th><td style="width:14%">'+(age!=null?age+"歳":"　")+'</td></tr>';
+  html+=row("住所",F.address);
   html+=row("要介護度（負担割合）",careText);
-  html+=row("既往歴と経過",form.medicalHistory,true);
-  html+=row("認知症状の状況",form.dementiaSymptoms,true);
-  html+=row("医療依存",form.medicalDependency,true);
+  html+=row("既往歴と経過",F.medicalHistory,true);
+  html+=row("認知症状の状況",F.dementiaSymptoms,true);
+  html+=row("医療依存",F.medicalDependency,true);
   html+=row("その他",composeSheetOther(),true);
   html+='</tbody></table>';
   html+='<h3 style="font-size:1.1364em;font-weight:700;margin:10px 0 0">相談者情報</h3>';
   html+='<table style="margin-top:4px"><tbody>';
-  html+=row("フリガナ",form.consultantFurigana);
+  html+=row("フリガナ",F.consultantFurigana);
   html+=row("氏名（続柄）",consultantNameText);
-  html+=row("住所",form.consultantAddress);
+  html+=row("住所",F.consultantAddress);
   html+=row("その他",composeConsultantOther(),true);
   html+='</tbody></table>';
   html+='<p style="font-size:.9545em;margin:10px 0 0">※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。</p>';
-  html+='<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(form.staffName)+'</p><p>TEL：'+esc(form.staffPhone)+'</p><p>メール：info@goodbyinc.com</p></div>';
+  html+='<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(F.staffName)+'</p><p>TEL：'+esc(F.staffPhone)+'</p><p>メール：info@goodbyinc.com</p></div>';
   document.getElementById("sheetPage").innerHTML=html;
   fitSheet();
 }
