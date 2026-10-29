@@ -86,6 +86,8 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 .pill{border-radius:999px;background:var(--accent-soft);color:var(--accent);padding:6px 14px;font-size:14px;font-weight:700}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
 .pill.plain{background:var(--surface);color:var(--dim);border:1px solid var(--border)}
+.testbanner{background:var(--warn);color:#fff;text-align:center;font-size:14px;font-weight:700;padding:6px 12px}
+@media (prefers-color-scheme: dark){ .testbanner{color:#1a1206} }
 .statusmsg{margin:0 0 12px;border-radius:var(--radius);padding:10px 14px;font-size:14px;line-height:1.7}
 .statusmsg.warn{background:var(--warn-soft)}
 .statusmsg.danger{background:var(--warn-soft);border:2px solid var(--danger)}
@@ -120,6 +122,7 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 </head>
 <body>
 <header class="top no-print">
+  <div class="testbanner hidden" id="testBanner">テストモード：保存ボタンを押しても集計シートには送信されません</div>
   <div class="inner">
     <div>
       <h1>インテーク入力（共有版）</h1>
@@ -133,7 +136,7 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 <main class="wrap">
   <!-- FORM VIEW -->
   <div id="formView">
-    <div class="notice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
+    <div class="notice" id="mainNotice">入力して「集計シートへ保存する」を押すと、内容が集計シート「インテーク集計」に1行追加され、紹介シートが表示されます。集計シートの閲覧は権限のあるアカウントのみ可能です。このページから他の方の入力内容を見ることはできません。</div>
     <form id="intakeForm" novalidate></form>
     <p class="error" id="formError" role="alert"></p>
     <div class="spacer"></div>
@@ -167,6 +170,13 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 
 <script>
 var ENDPOINT = "https://script.google.com/macros/s/AKfycbwT1OK6z9xIxutwlshb-ZzeVAgBTHqX6Lta-lnlwn9kopeqLxE6tD5Qu0RpwWLlrdDyDQ/exec";
+
+/* Test mode: open with ?test=1 (or #test). Nothing is sent to the sheet. */
+var TEST_MODE = /[?&]test=1\b/.test(location.search) || location.hash==="#test";
+if(TEST_MODE){
+  document.getElementById("testBanner").classList.remove("hidden");
+  document.title="【テスト】"+document.title;
+}
 
 var GENDERS=["男性","女性"];
 var CARE_LEVELS=["未申請","申請中","要支援1","要支援2","要介護1","要介護2","要介護3","要介護4","要介護5"];
@@ -497,6 +507,9 @@ window.addEventListener("resize",function(){ setHeaderVar(); updateActiveFromScr
 formEl.addEventListener("input",updateNavFilled);
 formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")) updateNavFilled(); });
 
+if(TEST_MODE){
+  document.getElementById("mainNotice").textContent="テストモードです。自由に入力して「集計シートへ保存する」を押してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。";
+}
 renderForm();
 setHeaderVar();
 updateActiveFromScroll();
@@ -590,6 +603,9 @@ function showSheet(mode){
   var pill=document.getElementById("savePill"), msg=document.getElementById("saveMsg");
   pill.className="pill"; msg.className="statusmsg no-print hidden"; msg.textContent="";
   if(mode==="ok"){ pill.textContent="集計シートに保存しました"; }
+  else if(mode==="test"){
+    pill.classList.add("warn"); pill.textContent="テストモードのため保存していません";
+  }
   else if(mode==="unknown"){
     pill.classList.add("warn"); pill.textContent="保存を確認できませんでした";
     msg.className="statusmsg no-print warn";
@@ -638,6 +654,9 @@ function askResend(){
 
 function doSend(){
   if(navigator.onLine===false){ showError("インターネットに接続されていません。接続を確認してから、もう一度保存してください。（まだ送信していません）"); return; }
+  if(TEST_MODE){
+    saved={snapshot:snapshot(),status:"ok"}; updateBottomNote(); showSheet("test"); return;
+  }
   sending=true; submitBtn.disabled=true; submitBtn.textContent="保存しています…";
   var snap=snapshot();
   var payload=buildPayload();
