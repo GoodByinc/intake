@@ -1305,7 +1305,7 @@ function renderSheet(){
   html+='<tr><th>その他</th><td'+span+'>'+(F.consultantOther?esc(F.consultantOther).replace(/\n/g,"<br>"):"　")+'</td></tr>';
   html+='</tbody></table>';
   html+='<div class="sheet-foot"><p class="sheet-note">※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。</p>'+
-    '<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(F.staffName)+'</p><p>TEL：'+COMPANY_TEL+'</p><p>メール：info@goodbyinc.com</p></div></div>';
+    '<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(F.staffName)+'</p><p>TEL：'+staffTel(F.staffName)+'</p><p>メール：info@goodbyinc.com</p></div></div>';
   document.getElementById("sheetPage").innerHTML=html;
   fitSheet();
 }
@@ -1339,6 +1339,58 @@ function fitSheet(){
     fitMsg.textContent="";
   }
   return chosen;
+}
+
+/* ---- Values for the referral tab in "お客様紹介シート" (one tab per customer) ---- */
+var STAFF_TEL={"河田":"090-1480-7174","宮川":"070-8331-8009","宮本":"070-9404-5289","川原":"080-8860-5850"};
+function staffTel(name){ return STAFF_TEL[name]||COMPANY_TEL; }
+function warekiDate(ymd){
+  var p=parseYmd(ymd); if(!p) return "";
+  var t=p.y*10000+p.m*100+p.d, era, y;
+  if(t>=20190501){ era="令和"; y=p.y-2018; } else if(t>=19890108){ era="平成"; y=p.y-1988; }
+  else if(t>=19261225){ era="昭和"; y=p.y-1925; } else if(t>=19120730){ era="大正"; y=p.y-1911; } else { era="明治"; y=p.y-1867; }
+  return era+(y===1?"元":y)+"年"+p.m+"月"+p.d+"日";
+}
+function pairLines(items){
+  /* their sheet puts two short items on one line: "食事：自立　　排泄：自立" */
+  var out=[], buf=null;
+  items.filter(function(p){ return p[1]; }).forEach(function(p){
+    var s=p[0]+"："+p[1];
+    if(s.length<=14){ if(buf){ out.push(buf+"　　"+s); buf=null; } else buf=s; }
+    else { if(buf){ out.push(buf); buf=null; } out.push(s); }
+  });
+  if(buf) out.push(buf);
+  return out;
+}
+function block(title,lines){ lines=lines.filter(function(l){ return l && String(l).trim(); }); return lines.length ? "["+title+"]\n"+lines.join("\n") : ""; }
+function referralPayload(){
+  var M=sheetModel(), C=M.C, F=M.F;
+  var age=computeAge(F.birthDate,F.referralDate);
+  var history=[
+    block("現病歴・既往歴と経過",diseaseLines().concat([F.medicalHistory])),
+    block("お薬",[F.medicines]),
+    block("現在利用中のサービス",[F.currentServices]),
+    block("生活状況",[C.status?"現状："+C.status:"",F.currentStatusDetail,F.welfare?"生活保護："+F.welfare:""]),
+    block("身体状況",pairLines([["麻痺",C.paralysis],["視力",C.vision],["聴力",C.hearing],["会話",C.speech],["リハビリ",C.rehab]])),
+    block("ADL",pairLines([["食事",C.meal],["排泄",C.toilet],["洗面",F.adlWash],["入浴",C.bath],["更衣",C.dress],["移乗",C.transfer],["移動",C.mobility],["睡眠",C.sleep],["口腔ケア",C.oralOnly]])),
+    block("その他",[F.notes])
+  ].filter(Boolean).join("\n\n");
+  var dementia=[C.dementiaType].concat(cleanGroups(M.dementia).length ? cleanGroups(M.dementia)[0].items.filter(function(p){ return p[0]!=="診断" && p[0]!=="種類"; }).map(function(p){ return p[0]+"："+p[1]; }) : []).filter(Boolean).join("\n");
+  var medItems=cleanGroups([M.medical[2]]);
+  var medical=medItems.length ? medItems[0].items.map(function(p){ return p[0]+"："+p[1]; }).join("\n") : "なし";
+  var kpOther=[genoSummary()?"家族構成："+genoSummary():"",F.familyStructure,F.consultantOther].filter(Boolean).join("\n");
+  return {
+    tabName:(F.name||"").trim()+"さん",
+    greeting:"大変お世話になっております。秋桜の"+F.staffName+"でございます。\nご入居を検討されている方をご紹介いたします。施設見学の際は、ご対応お願い致します。",
+    date:fmtSlash(F.referralDate),
+    furigana:F.furigana, name:F.name, birth:withD(warekiDate(F.birthDate),"birthDate"),
+    gender:F.gender, age:age==null?"":String(age), address:F.address,
+    care:F.careLevel, share:F.costShare?F.costShare+"負担":"",
+    history:history, dementia:dementia, medical:medical, other:F.caseManager?"CM："+F.caseManager:"",
+    kpFurigana:F.consultantFurigana, kpName:F.consultantName, kpPhone:F.consultantContact, kpRelation:F.consultantRelation,
+    kpAddress:F.consultantAddress, kpOther:kpOther,
+    staff:"担当："+F.staffName, tel:"TEL："+staffTel(F.staffName)
+  };
 }
 
 /* ---- Preview, confirm and save ---- */
@@ -1455,6 +1507,7 @@ function doSend(){
   sending=true; confirmSaveBtn.disabled=true; confirmSaveBtn.textContent="保存しています…";
   var snap=snapshot();
   var payload=buildPayload();
+  payload._referral=referralPayload();
   var ctrl = ("AbortController" in window) ? new AbortController() : null;
   var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, TIMEOUT_MS) : null;
   function done(){ if(timer) clearTimeout(timer); sending=false; confirmSaveBtn.disabled=false; confirmSaveBtn.textContent=SAVE_LABEL; }
@@ -1464,7 +1517,18 @@ function doSend(){
     .then(function(r){
       done();
       if(snapshot()!==snap){ /* edited while sending: keep the state honest */ }
-      if(r.json && r.json.ok===true){ saved={snapshot:snap,status:"ok"}; clearDraft(); showSheet("ok"); }
+      if(r.json && r.json.ok===true){
+        saved={snapshot:snap,status:"ok"}; clearDraft(); showSheet("ok");
+        var tab=r.json.tab, pill=document.getElementById("savePill"), msg=document.getElementById("saveMsg");
+        if(tab && tab.ok){
+          pill.textContent="集計シートとお客様紹介シートに保存しました";
+          msg.className="statusmsg no-print"; msg.textContent="お客様紹介シートに「"+tab.name+"」のタブを作りました。";
+        } else if(tab && !tab.ok){
+          pill.className="pill warn"; pill.textContent="お客様紹介シートのタブを作れませんでした";
+          msg.className="statusmsg no-print warn";
+          msg.textContent="集計シートには保存しましたが、お客様紹介シートへのタブ作成に失敗しました（"+tab.error+"）。もう一度保存すると集計シートに行が重複するため、河田に連絡してください。";
+        }
+      }
       else if(r.json && r.json.ok===false){ showError("集計シートへの保存に失敗しました（"+(r.json.error||"理由不明")+"）。時間をおいて、もう一度お試しください。"); }
       else { saved={snapshot:snap,status:"unknown"}; clearDraft(); showSheet("unknown"); }
     })
@@ -1524,7 +1588,7 @@ function sheetText(){
   out.push("");
   out.push("※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。");
   out.push("");
-  out.push("高齢者住宅相談センター 秋桜"); out.push("担当："+F.staffName); out.push("TEL："+COMPANY_TEL); out.push("メール：info@goodbyinc.com");
+  out.push("高齢者住宅相談センター 秋桜"); out.push("担当："+F.staffName); out.push("TEL："+staffTel(F.staffName)); out.push("メール：info@goodbyinc.com");
   return out.join("\n");
 }
 
