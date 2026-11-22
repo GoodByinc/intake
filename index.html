@@ -106,6 +106,51 @@ body.sheet-mode .scrubber, body.sheet-mode .scrubbubble{display:none !important}
 .flash{animation:flash 1.4s ease-out}
 @keyframes flash{0%{box-shadow:0 0 0 4px var(--warn)}100%{box-shadow:0 0 0 4px transparent}}
 .toast{white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:120;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:15px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+/* Selects, birth date wheels, disease rows */
+.sel{width:100%;min-height:52px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 12px;font-size:17px;font-family:inherit}
+.birthrow{display:grid;grid-template-columns:2.2fr 1fr 1fr;gap:8px}
+.dzhead,.dzrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dzhead{font-size:12px;color:var(--dim);margin-bottom:4px}
+.dzrow{margin-bottom:8px}
+.dzrow input{min-height:46px}
+.addrow{margin-top:2px}
+/* Genogram editor */
+.genoview{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:8px;overflow-x:auto;margin-bottom:10px}
+.genoview svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.genoview [data-geno-id]{cursor:pointer}
+.geno .gl line{stroke:#333;stroke-width:1.6}
+.geno .gn{fill:#fff;stroke:#222;stroke-width:1.8}
+.geno .gx{stroke:#222;stroke-width:1.6}
+.geno .gco{fill:none;stroke:#2f5d50;stroke-width:1.4;stroke-dasharray:4 3}
+.geno .gt{font-size:12px;text-anchor:middle;fill:#222;font-weight:700}
+.geno .gt2{font-size:11px;text-anchor:middle;fill:#444}
+.geno .gkp{font-size:11px;fill:#b3402e;font-weight:700}
+.genoadd{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.choice.small{min-height:40px;padding:0 12px;font-size:14px}
+.choice:disabled{opacity:.4}
+.gcard{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:10px 12px;margin-bottom:8px}
+.gtop{display:flex;align-items:center;margin-bottom:8px}
+.gtop strong{font-size:15px}
+.gdel{margin-left:auto;min-height:34px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--danger);padding:0 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.grow{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px}
+.gcard input{min-height:44px}
+.glabel{margin-bottom:8px}
+.gflags .choice{min-height:40px;font-size:14px;padding:0 12px}
+/* Sheet groups */
+.sheet-page .sg{margin:0 0 .35em}
+.sheet-page .sg:last-child{margin-bottom:0}
+.sheet-page .sgt{font-weight:700}
+.sheet-page .sgt:before{content:"【"}
+.sheet-page .sgt:after{content:"】"}
+.sheet-page .si{padding-left:.6em}
+.sheet-page .sl{font-weight:600}
+.sheet-page .sgeno svg{display:block;max-width:100%;height:auto;max-height:36mm;margin:0 auto}
+.sheet-page td.genocell{width:42%;vertical-align:middle;padding:2px}
+.sheet-page .sg.two{display:grid;grid-template-columns:1fr 1fr;column-gap:.8em}
+.sheet-page .sg.two .sgt{grid-column:1/-1}
+.sheet-foot{margin-top:auto;padding-top:8px;display:flex;align-items:flex-end;gap:12px}
+.sheet-note{flex:1;margin:0;font-size:.9545em}
+.sheet-foot .sheet-sign{margin-top:0;padding-top:0}
 /* Long-press details */
 .lptarget{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .choice{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
@@ -266,6 +311,7 @@ var SLEEP_OPTIONS=["眠れる","眠れない"];
 var DAYLIFE=["自由生活","車椅子上","床上","その他"];
 var DENTURE=["義歯なし","義歯あり"];
 var DENTURE_PARTS=["上","下","部分"];
+var DEMENTIA_DIAG=["診断あり","診断なし"];
 var DEMENTIA_TYPES=["アルツハイマー型","脳血管性","その他"];
 var DEMENTIA_SYMPTOMS=["昼夜逆転","徘徊","不穏","暴力行為","不潔行為","異食","感情失禁","妄想","帰宅願望","物忘れ"];
 var NURSE_CALL=["押せる","押せない","工夫あり"];
@@ -308,14 +354,15 @@ var TEXT_KEYS=("staffName staffPhone facilityName caseManager name furigana gend
   "dementiaType dementiaTypeOther dementiaSymptoms comprehension nurseCall mentalMeasures mentalOther "+
   "insulinBy insulinMethod medicalDependency medicalProcedures medicalHistory medicines "+
   "consultantName consultantFurigana consultantRelation consultantAddress consultantContact familyStructure consultantOther "+
-  "desiredArea desiredFacilityType desiredTiming initialCostLimit monthlyCostLimit budget pension savings facilityRequests notes").split(" ");
+  "desiredArea desiredFacilityType desiredTiming initialCostLimit monthlyCostLimit pension savings facilityRequests notes dementiaDiagnosis").split(" ");
 function emptyForm(){
   var f={referralDate:todayTokyo(),details:{}};
   TEXT_KEYS.forEach(function(k){ f[k]=""; });
   ARRAY_KEYS.forEach(function(k){ f[k]=[]; });
   MED_ITEMS.forEach(function(m){ f[m[0]]=""; f[m[0]+"Detail"]=""; });
+  f.diseases=[]; f.genogram=[]; f.birthParts=null;
   var staff=lsGet("akizakura-intake-staff");
-  if(staff){ f.staffName=staff.staffName||""; f.staffPhone=staff.staffPhone||""; }
+  if(staff){ f.staffName=staff.staffName||""; }
   return f;
 }
 var form = emptyForm();
@@ -334,6 +381,7 @@ var SHOW_IF={
   sitHours:["sitting",["可能"]],
   dayLifeOther:["dayLife",["その他"]],
   dentureParts:["denture",["義歯あり"]],
+  dementiaType:["dementiaDiagnosis",["診断あり"]],
   dementiaTypeOther:["dementiaType",["その他"]],
   insulinBy:["medInsulin",["あり"]], insulinMethod:["medInsulin",["あり"]]
 };
@@ -357,7 +405,7 @@ function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,
 /* Details added by long-press are appended to the item's value as "value（detail）". No new sheet columns. */
 function detailOf(key){ return ((form.details||{})[key]||"").trim(); }
 function withD(base,key){ var b=String(base==null?"":base).trim(), d=detailOf(key); if(!d) return b; return b ? b+"（"+d+"）" : d; }
-var RAW_KEYS={referralDate:1,birthDate:1,details:1};
+var RAW_KEYS={referralDate:1,birthDate:1,details:1,diseases:1,genogram:1,birthParts:1};
 /* F: every field as display text (arrays joined, details appended, hidden conditional fields emptied) */
 function outForm(){
   var F={};
@@ -399,8 +447,11 @@ function columns(){
   C.mobility=withExtras(F.mobility,[F.rolling?"寝返り "+F.rolling+(F.rollInterval?"（体交 "+F.rollInterval+"時間毎）":""):"",
     kv("エアーマット",F.airMat),kv("立位",F.standing),F.sitting?"座位 "+F.sitting+(F.sitHours?"（"+F.sitHours+"時間）":""):""]);
   C.sleep=withExtras(F.adlSleep,[F.sleepMed?"眠剤 "+F.sleepMed:"",F.dayLife?"日中 "+(form.dayLife==="その他"&&F.dayLifeOther?F.dayLifeOther:F.dayLife):""]);
-  C.oral=withExtras(F.adlOral,[F.denture?F.denture+(F.dentureParts?"（"+F.dentureParts+"）":""):"",kv("洗面",F.adlWash)]);
-  C.dementiaType=(form.dementiaType==="その他" && F.dementiaTypeOther) ? F.dementiaTypeOther : F.dementiaType;
+  var dent=F.denture?F.denture+(F.dentureParts?"（"+F.dentureParts+"）":""):"";
+  C.oral=withExtras(F.adlOral,[dent,kv("洗面",F.adlWash)]);
+  C.oralOnly=withExtras(F.adlOral,[dent]);
+  C.dementiaTypeOnly=(form.dementiaType==="その他" && F.dementiaTypeOther) ? F.dementiaTypeOther : F.dementiaType;
+  C.dementiaType = form.dementiaDiagnosis==="診断あり" ? withExtras(F.dementiaDiagnosis,[C.dementiaTypeOnly]) : F.dementiaDiagnosis;
   C.dementiaSymptoms=joinT([F.dementiaSymptomList?"症状："+F.dementiaSymptomList:"",F.dementiaSymptoms,
     F.mentalProblems?"精神状況の問題："+F.mentalProblems:"",F.mentalMeasures?"対策："+F.mentalMeasures:"",F.mentalOther?"精神状況その他："+F.mentalOther:""],"\n");
   C.comprehension=withExtras(F.comprehension,[kv("ナースコール",F.nurseCall)]);
@@ -413,7 +464,8 @@ function columns(){
   });
   C.medDependency=joinT([med.length?"あり："+med.join("、"):"",F.medicalDependency],"\n");
   C.medProcedures=joinT([F.pressureSore?"褥瘡 "+F.pressureSore:"",F.medicalProcedures,F.medicines?"お薬："+F.medicines:""],"\n");
-  C.history=F.medicalHistory;
+  C.history=joinT([diseaseLines().join("、"),F.medicalHistory],"\n");
+  C.family=joinT([genoSummary(),F.familyStructure],"\n");
   C.money=joinT([F.pension?"年金 月"+F.pension+(/円/.test(F.pension)?"":"円"):"",F.savings?"貯金額 "+F.savings+(/円/.test(F.savings)?"":"円"):""],"　");
   C.notes=joinT([C.money,F.notes],"\n");
   C.F=F;
@@ -427,8 +479,8 @@ function buildPayload(){
   obj["受付日時"]=fmtReceived(new Date());
   obj["ご紹介日"]=fmtSlash(F.referralDate);
   obj["担当者"]=F.staffName;
-  obj["担当電話"]=F.staffPhone;
-  obj["紹介先施設名"]=F.facilityName;
+  obj["担当電話"]="";
+  obj["紹介先施設名"]="";
   obj["氏名"]=F.name;
   obj["フリガナ"]=F.furigana;
   obj["性別"]=F.gender;
@@ -466,51 +518,24 @@ function buildPayload(){
   obj["相談者続柄"]=F.consultantRelation;
   obj["相談者住所"]=F.consultantAddress;
   obj["相談者連絡先"]=F.consultantContact;
-  obj["家族構成"]=F.familyStructure;
+  obj["家族構成"]=C.family;
   obj["相談者その他"]=F.consultantOther;
   obj["希望エリア"]=F.desiredArea;
   obj["希望施設種類"]=F.desiredFacilityType;
   obj["入居希望時期"]=F.desiredTiming;
   obj["入居時費用上限"]=F.initialCostLimit;
-  obj["月額費用上限"]=joinT([F.monthlyCostLimit,F.budget?"予算 "+F.budget:""],"、");
+  obj["月額費用上限"]=F.monthlyCostLimit;
   obj["施設への要望"]=F.facilityRequests;
   obj["備考"]=C.notes;
   return obj;
 }
 
 /* Referral sheet "その他" (pension and savings are kept off the facility sheet) */
-function composeSheetOther(){
-  var C=columns(), F=C.F, lines=[];
-  var status=joinT([C.status,F.currentStatusDetail]," ");
-  if(status) lines.push("現状："+status);
-  if(F.welfare) lines.push("生活保護："+F.welfare);
-  var adl=[["食事",C.meal],["排泄",C.toilet],["入浴",C.bath],["更衣",C.dress],["移乗",C.transfer],["移動",C.mobility],["睡眠",C.sleep],["口腔ケア",C.oral]];
-  var adlRows=adl.filter(function(p){return p[1];}).map(function(p){return "　"+p[0]+"："+p[1];});
-  if(adlRows.length) lines.push("日常生活援助\n"+adlRows.join("\n"));
-  var body=joinT([kv("麻痺",C.paralysis),kv("視力",C.vision),kv("聴力",C.hearing),kv("会話",C.speech),kv("リハビリ",C.rehab)]);
-  if(body) lines.push("身体状況："+body);
-  if(C.dementiaType) lines.push("認知症の種類："+C.dementiaType);
-  if(C.comprehension) lines.push("理解力："+C.comprehension);
-  if(C.medProcedures) lines.push("医療処置："+C.medProcedures.replace(/\n/g,"、"));
-  if(C.services) lines.push("利用中のサービス："+C.services.replace(/\n/g,"、"));
-  var wishes=joinT([kv("エリア",F.desiredArea),kv("施設種類",F.desiredFacilityType),kv("時期",F.desiredTiming),
-    F.initialCostLimit?"入居時費用 "+F.initialCostLimit+"まで":"",F.monthlyCostLimit?"月額費用 "+F.monthlyCostLimit+"まで":"",kv("予算",F.budget),kv("施設への要望",F.facilityRequests)]);
-  if(wishes) lines.push("ご希望条件："+wishes);
-  if(F.notes) lines.push("備考："+F.notes);
-  return lines.join("\n");
-}
-function composeConsultantOther(){
-  var F=outForm(), lines=[];
-  if(F.consultantContact) lines.push("連絡先："+F.consultantContact);
-  if(F.familyStructure) lines.push("家族構成："+F.familyStructure);
-  if(F.consultantOther) lines.push(F.consultantOther);
-  return lines.join("\n");
-}
 
 /* ---- Form rendering ---- */
 var formEl=document.getElementById("intakeForm");
 /* Fields in section 1 (date, staff, facility) are used in the greeting and signature, so they take no details. */
-var NO_DETAIL={referralDate:1,staffName:1,staffPhone:1,facilityName:1};
+var NO_DETAIL={referralDate:1,staffName:1,genogram:1,diseases:1};
 var LP_MS=500;
 function detailBtnHtml(key,label){ return NO_DETAIL[key] ? "" : '<button type="button" class="detailbtn" data-detail-btn="'+key+'" aria-label="'+esc(label)+'の詳細を書く">＋詳細</button>'; }
 function addDetailUI(wrap,key,label,pressEl){
@@ -650,22 +675,307 @@ function section(num,title,children,opts){
 function fullNode(node){ var d=document.createElement("div"); d.className="full"; d.appendChild(node); return d; }
 function full(node){ node.classList.add("full"); return node; }
 
+/* ---- Staff dropdown ---- */
+var STAFF=["河田","宮川","宮本","川原"];
+var COMPANY_TEL="0294-40-9131";
+function selectStyle(sel){ sel.className="sel"; return sel; }
+function staffField(label,key){
+  var wrap=document.createElement("div"); wrap.dataset.field=key;
+  var lab=document.createElement("label"); lab.className="lbl";
+  lab.innerHTML='<span class="lbltext">'+esc(label)+'</span>';
+  var sel=selectStyle(document.createElement("select")); sel.dataset.key=key; sel.setAttribute("aria-label",label);
+  var opts=['<option value="">選択してください</option>'];
+  var list=STAFF.slice(); if(form[key] && list.indexOf(form[key])<0) list.push(form[key]);
+  list.forEach(function(n){ opts.push('<option value="'+esc(n)+'">'+esc(n)+'</option>'); });
+  sel.innerHTML=opts.join(""); sel.value=form[key]||"";
+  sel.addEventListener("change",function(){
+    form[key]=sel.value;
+    lsSet("akizakura-intake-staff",{staffName:form.staffName});
+    sel.dispatchEvent(new Event("input",{bubbles:true}));
+  });
+  lab.appendChild(sel); wrap.appendChild(lab); return wrap;
+}
+
+/* ---- Birth date as three wheels (year / month / day) ---- */
+function warekiLabel(y){
+  function era(yy,mm,dd){ var t=yy*10000+mm*100+dd;
+    if(t>=20190501) return "令和"+((yy-2018)===1?"元":(yy-2018));
+    if(t>=19890108) return "平成"+((yy-1988)===1?"元":(yy-1988));
+    if(t>=19261225) return "昭和"+((yy-1925)===1?"元":(yy-1925));
+    if(t>=19120730) return "大正"+((yy-1911)===1?"元":(yy-1911));
+    return "明治"+(yy-1867); }
+  var a=era(y,1,1), b=era(y,12,31);
+  return a===b ? a+"年" : a+"／"+b+"年";
+}
+function daysIn(y,m){ return new Date(y||2000, m, 0).getDate(); }
+function birthField(label,key){
+  var wrap=document.createElement("div"); wrap.dataset.field=key; wrap.className="full";
+  var head=document.createElement("div"); head.className="lbltext lptarget";
+  head.innerHTML=esc(label)+'<span class="hint" data-age-hint></span>'+detailBtnHtml(key,label);
+  var row=document.createElement("div"); row.className="birthrow";
+  var p=parseYmd(form[key]) || form.birthParts || {};
+  var ys=selectStyle(document.createElement("select")), ms=selectStyle(document.createElement("select")), ds=selectStyle(document.createElement("select"));
+  ys.setAttribute("aria-label","生まれた年"); ms.setAttribute("aria-label","生まれた月"); ds.setAttribute("aria-label","生まれた日");
+  var thisYear=+todayTokyo().slice(0,4), yo=['<option value="">年</option>'];
+  for(var y=1910;y<=thisYear;y++) yo.push('<option value="'+y+'">'+y+'年（'+warekiLabel(y)+'）</option>');
+  ys.innerHTML=yo.join("");
+  var mo=['<option value="">月</option>']; for(var m=1;m<=12;m++) mo.push('<option value="'+m+'">'+m+'月</option>'); ms.innerHTML=mo.join("");
+  function fillDays(){
+    var keep=ds.value, n=daysIn(+ys.value, +ms.value||1), dopt=['<option value="">日</option>'];
+    for(var d=1;d<=n;d++) dopt.push('<option value="'+d+'">'+d+'日</option>');
+    ds.innerHTML=dopt.join(""); if(keep && +keep<=n) ds.value=keep;
+  }
+  ys.value=p.y||""; ms.value=p.m||""; fillDays(); ds.value=p.d||"";
+  function sync(){
+    fillDays();
+    form.birthParts={y:+ys.value||0,m:+ms.value||0,d:+ds.value||0};
+    form[key] = (ys.value&&ms.value&&ds.value) ? ys.value+"-"+("0"+ms.value).slice(-2)+"-"+("0"+ds.value).slice(-2) : "";
+    updateAgeHints();
+    ds.dispatchEvent(new Event("input",{bubbles:true}));
+  }
+  [ys,ms,ds].forEach(function(s){ s.addEventListener("change",sync); });
+  row.appendChild(ys); row.appendChild(ms); row.appendChild(ds);
+  wrap.appendChild(head); wrap.appendChild(row);
+  return addDetailUI(wrap,key,label,head);
+}
+
+/* ---- Disease name + family doctor rows ---- */
+var DISEASE_ROWS=5;
+function ensureDiseases(){
+  if(!Array.isArray(form.diseases)) form.diseases=[];
+  while(form.diseases.length<DISEASE_ROWS) form.diseases.push({name:"",clinic:""});
+}
+function diseaseField(){
+  ensureDiseases();
+  var wrap=document.createElement("div"); wrap.className="full"; wrap.dataset.field="diseases";
+  wrap.innerHTML='<div class="lbltext">病名とかかりつけ</div><div class="dzhead"><span>病名</span><span>かかりつけ（医療機関）</span></div><div class="dzrows"></div>'+
+    '<button type="button" class="btn addrow">＋病名の欄を追加</button>';
+  var rows=wrap.querySelector(".dzrows");
+  function draw(){
+    rows.innerHTML="";
+    form.diseases.forEach(function(r,i){
+      var line=document.createElement("div"); line.className="dzrow";
+      var a=document.createElement("input"); a.type="text"; a.placeholder="病名"+(i+1); a.value=r.name; a.setAttribute("aria-label","病名"+(i+1));
+      var b=document.createElement("input"); b.type="text"; b.placeholder="かかりつけ"; b.value=r.clinic; b.setAttribute("aria-label","病名"+(i+1)+"のかかりつけ");
+      a.addEventListener("input",function(){ r.name=a.value; });
+      b.addEventListener("input",function(){ r.clinic=b.value; });
+      line.appendChild(a); line.appendChild(b); rows.appendChild(line);
+    });
+  }
+  draw();
+  wrap.querySelector(".addrow").addEventListener("click",function(){
+    form.diseases.push({name:"",clinic:""}); draw();
+    var ins=rows.querySelectorAll("input"); ins[ins.length-2].focus();
+    saveDraftSoon();
+  });
+  return wrap;
+}
+function diseaseLines(){
+  ensureDiseases();
+  return form.diseases.filter(function(r){ return (r.name||"").trim()||(r.clinic||"").trim(); }).map(function(r){
+    var n=(r.name||"").trim()||"病名未記入", c=(r.clinic||"").trim();
+    return c ? n+"（かかりつけ："+c+"）" : n;
+  });
+}
+
+/* ---- Genogram ---- */
+/* rel: spouse father mother brotherO sisterO brotherY sisterY son daughter grandchild other */
+var GENO_RELS=[
+  {rel:"spouse",label:"配偶者",once:true},{rel:"father",label:"父",once:true,sex:"M"},{rel:"mother",label:"母",once:true,sex:"F"},
+  {rel:"brotherO",label:"兄",sex:"M"},{rel:"sisterO",label:"姉",sex:"F"},{rel:"brotherY",label:"弟",sex:"M"},{rel:"sisterY",label:"妹",sex:"F"},
+  {rel:"son",label:"息子",sex:"M"},{rel:"daughter",label:"娘",sex:"F"},{rel:"grandchild",label:"孫"},{rel:"other",label:"その他"}
+];
+function relInfo(rel){ for(var i=0;i<GENO_RELS.length;i++) if(GENO_RELS[i].rel===rel) return GENO_RELS[i]; return {label:rel}; }
+function selfSex(){ return form.gender==="男性"?"M":(form.gender==="女性"?"F":""); }
+function memberSex(m){
+  var info=relInfo(m.rel);
+  if(info.sex) return info.sex;
+  if(m.rel==="spouse"){ var s=selfSex(); return s==="M"?"F":(s==="F"?"M":(m.sex||"")); }
+  return m.sex||"";
+}
+function relName(m){
+  if(m.rel==="other") return (m.label||"").trim()||"その他";
+  if(m.rel==="spouse"){ var s=memberSex(m); return s==="F"?"妻":(s==="M"?"夫":"配偶者"); }
+  if(m.rel==="son"||m.rel==="daughter"){
+    var same=(form.genogram||[]).filter(function(x){ return x.rel===m.rel; });
+    var idx=same.indexOf(m), base=m.rel==="son"?"男":"女";
+    var nums=["長","次","三","四","五"];
+    return same.length>1 ? (nums[idx]||"")+base : (m.rel==="son"?"長男":"長女");
+  }
+  if(m.rel==="grandchild"){ var s2=memberSex(m); return s2==="M"?"孫（男）":(s2==="F"?"孫（女）":"孫"); }
+  return relInfo(m.rel).label;
+}
+function genoSummary(){
+  var g=form.genogram||[]; if(!g.length) return "";
+  return g.map(function(m){
+    var flags=[]; if(m.dead) flags.push("故人"); if(m.cohabit) flags.push("同居"); if(m.kp) flags.push("KP");
+    var t=relName(m)+((m.name||"").trim()?" "+m.name.trim():"")+((m.age||"").trim()?" "+m.age.trim()+"歳":"");
+    return t+(flags.length?"（"+flags.join("、")+"）":"");
+  }).join("、");
+}
+var genoSeq=0;
+function genoSVG(opts){
+  opts=opts||{};
+  var g=(form.genogram||[]).filter(function(m){ return m.rel!=="other"; });
+  var S=34, GAP=92, PAD=30;
+  function by(rels){ return g.filter(function(m){ return rels.indexOf(m.rel)>=0; }); }
+  var parents=by(["father","mother"]).sort(function(a,b){ return a.rel==="father"?-1:1; });
+  var older=by(["brotherO","sisterO"]), younger=by(["brotherY","sisterY"]);
+  var spouse=by(["spouse"])[0], kids=by(["son","daughter"]), grands=by(["grandchild"]);
+  var self={self:true,name:form.name,dead:false};
+  var row0=older.concat([self]).concat(younger);
+  var nodes=[], lines=[];
+  var y1=PAD+S/2+4, y2=y1+(parents.length?110:0), y3=y2+120, y4=y3+120;
+  /* generation 0 positions */
+  var x=PAD+S/2; row0.forEach(function(m){ m._x=x; m._y=y2; x+=GAP; });
+  var selfX=self._x;
+  if(spouse){
+    /* place spouse right after self; shift younger siblings further right */
+    spouse._x=selfX+GAP; spouse._y=y2;
+    younger.forEach(function(m){ m._x+=GAP; });
+  }
+  var coupleMid = spouse ? (selfX+spouse._x)/2 : selfX;
+  /* parents centred over the sibling group */
+  var sibs=row0, sibMin=sibs[0]._x, sibMax=sibs[sibs.length-1]._x, sibMid=(sibMin+sibMax)/2;
+  if(parents.length===2){ parents[0]._x=sibMid-GAP/2; parents[1]._x=sibMid+GAP/2; }
+  else if(parents.length===1){ parents[0]._x=sibMid; }
+  parents.forEach(function(m){ m._y=y1; });
+  /* children centred under the couple */
+  var kw=(kids.length-1)*GAP; kids.forEach(function(m,i){ m._x=coupleMid-kw/2+i*GAP; m._y=y3; });
+  var gw=(grands.length-1)*GAP; var kidMid=kids.length?(kids[0]._x+kids[kids.length-1]._x)/2:coupleMid;
+  grands.forEach(function(m,i){ m._x=kidMid-gw/2+i*GAP; m._y=kids.length?y4:y3; });
+  var all=parents.concat(row0).concat(spouse?[spouse]:[]).concat(kids).concat(grands);
+  var minX=Math.min.apply(null,all.map(function(m){ return m._x; }))-S/2-PAD;
+  var maxX=Math.max.apply(null,all.map(function(m){ return m._x; }))+S/2+PAD;
+  var maxY=Math.max.apply(null,all.map(function(m){ return m._y; }))+S/2+44;
+  /* lines */
+  function L(x1,y1_,x2,y2_){ lines.push('<line x1="'+x1+'" y1="'+y1_+'" x2="'+x2+'" y2="'+y2_+'"/>'); }
+  if(parents.length===2) L(parents[0]._x+S/2,y1,parents[1]._x-S/2,y1);
+  if(parents.length){
+    var pm=parents.length===2?(parents[0]._x+parents[1]._x)/2:parents[0]._x, bar=y2-S/2-26;
+    L(pm, y1+(parents.length===2?0:S/2), pm, bar);
+    L(Math.min(sibMin,pm),bar,Math.max(sibMax,pm),bar);
+    row0.forEach(function(m){ L(m._x,bar,m._x,y2-S/2); });
+  } else if(row0.length>1){
+    var bar0=y2-S/2-22; L(sibMin,bar0,sibMax,bar0); row0.forEach(function(m){ L(m._x,bar0,m._x,y2-S/2); });
+  }
+  if(spouse) L(selfX+S/2,y2,spouse._x-S/2,y2);
+  if(kids.length){
+    var kb=y3-S/2-26, top=spouse?y2:y2+S/2+18;
+    L(coupleMid, top, coupleMid, kb);
+    L(Math.min(kids[0]._x,coupleMid),kb,Math.max(kids[kids.length-1]._x,coupleMid),kb);
+    kids.forEach(function(m){ L(m._x,kb,m._x,y3-S/2); });
+  }
+  if(grands.length){
+    var gy=grands[0]._y, gb=gy-S/2-26, from=kids.length?y3+S/2+18:(spouse?y2:y2+S/2+18);
+    L(kidMid, from, kidMid, gb);
+    L(Math.min(grands[0]._x,kidMid),gb,Math.max(grands[grands.length-1]._x,kidMid),gb);
+    grands.forEach(function(m){ L(m._x,gb,m._x,gy-S/2); });
+  }
+  /* nodes */
+  all.forEach(function(m){
+    var sex=m.self?selfSex():memberSex(m), cx=m._x, cy=m._y, h=S/2, out='';
+    var idAttr=m.self?'':' data-geno-id="'+m.id+'"';
+    if(m.cohabit || (m.self && (form.genogram||[]).some(function(z){ return z.cohabit; })))
+      out+='<rect x="'+(cx-h-7)+'" y="'+(cy-h-7)+'" width="'+(S+14)+'" height="'+(S+14)+'" rx="10" class="gco"/>';
+    if(sex==="M") out+='<rect x="'+(cx-h)+'" y="'+(cy-h)+'" width="'+S+'" height="'+S+'" class="gn"/>';
+    else if(sex==="F") out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+h+'" class="gn"/>';
+    else out+='<polygon points="'+cx+','+(cy-h)+' '+(cx+h)+','+cy+' '+cx+','+(cy+h)+' '+(cx-h)+','+cy+'" class="gn"/>';
+    if(m.self){
+      if(sex==="M") out+='<rect x="'+(cx-h+4)+'" y="'+(cy-h+4)+'" width="'+(S-8)+'" height="'+(S-8)+'" class="gn"/>';
+      else if(sex==="F") out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(h-4)+'" class="gn"/>';
+      else out+='<polygon points="'+cx+','+(cy-h+6)+' '+(cx+h-6)+','+cy+' '+cx+','+(cy+h-6)+' '+(cx-h+6)+','+cy+'" class="gn"/>';
+    }
+    if(m.dead) out+='<line x1="'+(cx-h)+'" y1="'+(cy-h)+'" x2="'+(cx+h)+'" y2="'+(cy+h)+'" class="gx"/><line x1="'+(cx+h)+'" y1="'+(cy-h)+'" x2="'+(cx-h)+'" y2="'+(cy+h)+'" class="gx"/>';
+    var l1=m.self?"本人":relName(m), l2=((m.name||"").trim()+((m.age||"").trim()?" "+m.age.trim()+"歳":"")).trim();
+    out+='<text x="'+cx+'" y="'+(cy+h+15)+'" class="gt">'+esc(l1)+'</text>';
+    if(l2 && !m.self) out+='<text x="'+cx+'" y="'+(cy+h+29)+'" class="gt2">'+esc(l2)+'</text>';
+    if(m.kp) out+='<text x="'+(cx+h+4)+'" y="'+(cy-h+2)+'" class="gkp">KP</text>';
+    nodes.push('<g'+idAttr+'>'+out+'</g>');
+  });
+  var w=maxX-minX, hgt=maxY;
+  var cls=opts.forSheet?"geno geno-sheet":"geno";
+  return '<svg class="'+cls+'" viewBox="'+minX+' 0 '+w+' '+hgt+'" width="'+w+'" height="'+hgt+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ジェノグラム">'+
+    '<g class="gl">'+lines.join("")+'</g>'+nodes.join("")+'</svg>';
+}
+function genogramField(){
+  if(!Array.isArray(form.genogram)) form.genogram=[];
+  var wrap=document.createElement("div"); wrap.className="full genowrap"; wrap.dataset.field="genogram";
+  wrap.innerHTML='<div class="lbltext">家族構成（ジェノグラム）</div>'+
+    '<p class="secnote" style="margin:0 0 8px">下のボタンで家族を追加します。□男性 ○女性、✕は故人、点線の囲みは同居、KPはキーパーソンです。図の人を押すと、その人の欄に移動します。</p>'+
+    '<div class="genoview"></div><div class="genoadd"></div><div class="genolist"></div>';
+  var view=wrap.querySelector(".genoview"), add=wrap.querySelector(".genoadd"), list=wrap.querySelector(".genolist");
+  function changed(){ draw(); saveDraftSoon(); updateNavFilled(); }
+  function drawView(){
+    view.innerHTML=genoSVG();
+    view.querySelectorAll("[data-geno-id]").forEach(function(el){
+      el.addEventListener("click",function(){
+        var card=list.querySelector('[data-card="'+el.dataset.genoId+'"]'); if(!card) return;
+        card.scrollIntoView({behavior:"smooth",block:"center"}); card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
+      });
+    });
+  }
+  function draw(){
+    drawView();
+    add.innerHTML="";
+    GENO_RELS.forEach(function(r){
+      var b=document.createElement("button"); b.type="button"; b.className="choice small"; b.textContent="＋"+r.label;
+      var exists=r.once && form.genogram.some(function(m){ return m.rel===r.rel; });
+      b.disabled=!!exists;
+      b.addEventListener("click",function(){
+        form.genogram.push({id:"g"+(Date.now()%1e7)+"_"+(genoSeq++),rel:r.rel,name:"",age:"",sex:"",label:"",dead:false,cohabit:false,kp:false});
+        changed();
+        var cards=list.querySelectorAll(".gcard"); var last=cards[cards.length-1]; if(last){ last.scrollIntoView({behavior:"smooth",block:"center"}); }
+      });
+      add.appendChild(b);
+    });
+    list.innerHTML="";
+    form.genogram.forEach(function(m){
+      var c=document.createElement("div"); c.className="gcard"; c.dataset.card=m.id;
+      var needSex = (m.rel==="grandchild"||m.rel==="other"||(m.rel==="spouse"&&!selfSex()));
+      c.innerHTML='<div class="gtop"><strong>'+esc(relName(m))+'</strong><button type="button" class="gdel" aria-label="削除">削除</button></div>'+
+        (m.rel==="other"?'<input type="text" class="glabel" placeholder="続柄（例：甥、姪、知人）">':'')+
+        '<div class="grow"><input type="text" class="gname" placeholder="名前（任意）"><input type="text" class="gage" inputmode="numeric" placeholder="年齢"></div>'+
+        '<div class="choices gflags">'+(needSex?'<button type="button" class="choice" data-sex="M">男性</button><button type="button" class="choice" data-sex="F">女性</button>':'')+
+        '<button type="button" class="choice" data-flag="dead">故人</button><button type="button" class="choice" data-flag="cohabit">同居</button><button type="button" class="choice" data-flag="kp">KP</button></div>';
+      var nm=c.querySelector(".gname"), ag=c.querySelector(".gage"), lb=c.querySelector(".glabel");
+      nm.value=m.name; ag.value=m.age; if(lb) lb.value=m.label;
+      nm.addEventListener("input",function(){ m.name=nm.value; drawView(); });
+      ag.addEventListener("input",function(){ m.age=ag.value; drawView(); });
+      if(lb) lb.addEventListener("input",function(){ m.label=lb.value; c.querySelector(".gtop strong").textContent=relName(m); });
+      c.querySelectorAll("[data-flag]").forEach(function(b){
+        b.classList.toggle("active",!!m[b.dataset.flag]);
+        b.addEventListener("click",function(){ m[b.dataset.flag]=!m[b.dataset.flag]; changed(); });
+      });
+      c.querySelectorAll("[data-sex]").forEach(function(b){
+        b.classList.toggle("active",m.sex===b.dataset.sex);
+        b.addEventListener("click",function(){ m.sex = m.sex===b.dataset.sex ? "" : b.dataset.sex; changed(); });
+      });
+      c.querySelector(".gdel").addEventListener("click",function(){
+        form.genogram=form.genogram.filter(function(x){ return x!==m; }); changed();
+      });
+      list.appendChild(c);
+    });
+  }
+  draw();
+  wrap._redraw=drawView;
+  return wrap;
+}
+
 function renderForm(){
   formEl.innerHTML="";
   formEl.appendChild(section(1,"基本",[
-    dateField("ご紹介日","referralDate"),
-    textField("担当者","staffName"),
-    textField("担当電話","staffPhone",{type:"tel",inputMode:"tel"}),
-    textField("紹介先施設名","facilityName"),
+    dateField("日付（実態調査日）","referralDate"),
+    staffField("担当者","staffName"),
     textField("担当CM・SW","caseManager")
   ]));
   formEl.appendChild(section(2,"ご入居希望者様",[
     textField("氏名","name",{hint:"必須"}),
     textField("フリガナ","furigana"),
     choiceField("性別",GENDERS,"gender",false),
-    dateField("生年月日","birthDate"),
-    fullNode(textField("住所","address")),
     textField("連絡先","contact",{type:"tel",inputMode:"tel"}),
+    birthField("生年月日","birthDate"),
+    fullNode(textField("住所","address")),
     choiceField("生活保護",YES_NO,"welfare",false),
     full(choiceField("要介護度",CARE_LEVELS,"careLevel",false)),
     choiceField("負担割合",COST_SHARES,"costShare",false),
@@ -676,7 +986,17 @@ function renderForm(){
     areaField("現状の詳細","currentStatusDetail",2),
     areaField("利用中のサービス","currentServices",2)
   ]));
-  formEl.appendChild(section(3,"身体状況",[
+  formEl.appendChild(section(3,"KP情報",[
+    textField("KP氏名","consultantName"),
+    textField("KPフリガナ","consultantFurigana"),
+    textField("続柄（関係）","consultantRelation"),
+    textField("KP連絡先","consultantContact",{type:"tel",inputMode:"tel"}),
+    fullNode(textField("KP住所","consultantAddress")),
+    genogramField(),
+    areaField("家族構成の補足","familyStructure",2),
+    areaField("KPその他","consultantOther",2)
+  ]));
+  formEl.appendChild(section(4,"身体状況",[
     choiceField("麻痺",YES_NO,"paralysis",false),
     textField("麻痺の部位","paralysisSite"),
     textField("麻痺の程度","paralysisLevel"),
@@ -688,7 +1008,7 @@ function renderForm(){
     choiceField("補聴器",SIDES,"hearingAidSide",true),
     choiceField("リハビリ実施",REHAB_OPTIONS,"rehab",true)
   ]));
-  formEl.appendChild(section(4,"日常生活援助",[
+  formEl.appendChild(section(5,"日常生活援助",[
     subhead("食事"),
     full(choiceField("食事動作",ADL_LEVELS,"adlMeal",false)),
     choiceField("食事量",MEAL_AMOUNT,"mealAmount",false),
@@ -736,7 +1056,8 @@ function renderForm(){
     choiceField("義歯の部位",DENTURE_PARTS,"dentureParts",true),
     choiceField("褥瘡",YES_NO,"pressureSore",false)
   ]));
-  formEl.appendChild(section(5,"認知症と精神状況",[
+  formEl.appendChild(section(6,"認知症と精神状況",[
+    choiceField("認知症の診断",DEMENTIA_DIAG,"dementiaDiagnosis",false),
     choiceField("認知症の種類",DEMENTIA_TYPES,"dementiaType",false),
     textField("認知症の種類（その他）","dementiaTypeOther"),
     full(choiceField("認知症の症状",DEMENTIA_SYMPTOMS,"dementiaSymptomList",true)),
@@ -747,33 +1068,23 @@ function renderForm(){
     textField("対策","mentalMeasures"),
     textField("精神状況その他","mentalOther")
   ]));
-  var med=[];
+  var med=[diseaseField()];
   MED_ITEMS.forEach(function(m){
     med.push(choiceField(m[1],NASHI_ARI,m[0],false));
     if(m[0]==="medInsulin"){ med.push(choiceField("インスリンの実施",INSULIN_BY,"insulinBy",false)); med.push(choiceField("インスリンの方法",INSULIN_METHOD,"insulinMethod",false)); }
     med.push(textField(m[1]+"の"+m[2],m[0]+"Detail",{hint:m[3]}));
   });
-  med.push(areaField("病歴等（既往歴と経過）","medicalHistory",3));
+  med.push(areaField("経過（病歴の経過など）","medicalHistory",3));
   med.push(areaField("お薬情報","medicines",2));
   med.push(areaField("その他の医療依存","medicalDependency",2));
   med.push(areaField("その他の医療処置","medicalProcedures",2));
-  formEl.appendChild(section(6,"医療情報",med,{collapsible:true}));
-  formEl.appendChild(section(7,"相談者情報（KP）",[
-    textField("相談者氏名","consultantName"),
-    textField("相談者フリガナ","consultantFurigana"),
-    textField("続柄（関係）","consultantRelation"),
-    textField("相談者連絡先","consultantContact",{type:"tel",inputMode:"tel"}),
-    fullNode(textField("相談者住所","consultantAddress")),
-    areaField("家族構成","familyStructure",2),
-    areaField("相談者その他","consultantOther",2)
-  ]));
-  formEl.appendChild(section(8,"ご希望条件",[
+  formEl.appendChild(section(7,"医療情報",med,{collapsible:true}));
+  formEl.appendChild(section(8,"施設希望",[
     textField("希望エリア","desiredArea"),
     textField("希望施設種類","desiredFacilityType"),
     full(choiceField("入居希望時期",TIMING_OPTIONS,"desiredTiming",false)),
     textField("入居時費用上限","initialCostLimit"),
     textField("月額費用上限","monthlyCostLimit"),
-    textField("予算","budget"),
     textField("年金（月額）","pension",{hint:"紹介シートには載りません"}),
     textField("貯金額","savings",{hint:"紹介シートには載りません"}),
     areaField("施設への要望（内容）","facilityRequests",2)
@@ -793,9 +1104,9 @@ function medCount(){
   var n=0; MED_ITEMS.forEach(function(m){ if(form[m[0]]==="あり") n++; });
   return n;
 }
-function medHasAny(){ return ["medicalHistory","medicines","medicalDependency","medicalProcedures"].some(function(k){ return hasValue(form[k]); }) || MED_ITEMS.some(function(m){ return form[m[0]]; }); }
+function medHasAny(){ return diseaseLines().length>0 || ["medicalHistory","medicines","medicalDependency","medicalProcedures"].some(function(k){ return hasValue(form[k]); }) || MED_ITEMS.some(function(m){ return form[m[0]]; }); }
 function updateMedHint(autoOpen){
-  var d=document.getElementById("sec-6"); if(!d) return;
+  var d=document.getElementById("sec-7"); if(!d) return;
   var h=d.querySelector("[data-toggle-hint]"), n=medCount();
   h.textContent = (d.open ? "閉じる" : "タップで開く") + (n ? "（ありが"+n+"件）" : (medHasAny()?"（入力あり）":""));
   if(autoOpen && medHasAny()) d.open=true;
@@ -807,14 +1118,14 @@ function updateAgeHints(){
 
 /* ---- Section tabs ---- */
 var SECTIONS=[
-  {n:1,label:"基本",keys:["staffName","staffPhone","facilityName","caseManager"]},
+  {n:1,label:"基本",keys:["staffName","caseManager"]},
   {n:2,label:"入居希望者",keys:["name","furigana","gender","birthDate","address","contact","careLevel","costShare","welfare","currentStatus","currentStatusDetail","currentServices"]},
-  {n:3,label:"身体状況",keys:["paralysis","vision","hearing","speech","rehab"]},
-  {n:4,label:"生活援助",keys:["adlMeal","mealAmount","stapleFood","sideDish","fluid","adlToilet","adlWash","adlBath","adlDress","adlTransfer","mobility","rolling","standing","sitting","adlSleep","dayLife","adlOral","denture","pressureSore"]},
-  {n:5,label:"認知と精神",keys:["dementiaType","dementiaSymptomList","dementiaSymptoms","comprehension","nurseCall","mentalProblems","mentalMeasures","mentalOther"]},
-  {n:6,label:"医療情報",keys:["medicalHistory","medicines","medicalDependency","medicalProcedures"].concat(MED_ITEMS.map(function(m){return m[0];}))},
-  {n:7,label:"相談者",keys:["consultantName","consultantFurigana","consultantRelation","consultantContact","consultantAddress","familyStructure","consultantOther"]},
-  {n:8,label:"希望条件",keys:["desiredArea","desiredFacilityType","desiredTiming","initialCostLimit","monthlyCostLimit","budget","pension","savings","facilityRequests"]},
+  {n:3,label:"KP情報",keys:["consultantName","consultantFurigana","consultantRelation","consultantContact","consultantAddress","genogram","familyStructure","consultantOther"]},
+  {n:4,label:"身体状況",keys:["paralysis","vision","hearing","speech","rehab"]},
+  {n:5,label:"生活援助",keys:["adlMeal","mealAmount","stapleFood","sideDish","fluid","adlToilet","adlWash","adlBath","adlDress","adlTransfer","mobility","rolling","standing","sitting","adlSleep","dayLife","adlOral","denture","pressureSore"]},
+  {n:6,label:"認知症",keys:["dementiaDiagnosis","dementiaType","dementiaSymptomList","dementiaSymptoms","comprehension","nurseCall","mentalProblems","mentalMeasures","mentalOther"]},
+  {n:7,label:"医療情報",keys:["diseases","medicalHistory","medicines","medicalDependency","medicalProcedures"].concat(MED_ITEMS.map(function(m){return m[0];}))},
+  {n:8,label:"施設希望",keys:["desiredArea","desiredFacilityType","desiredTiming","initialCostLimit","monthlyCostLimit","pension","savings","facilityRequests"]},
   {n:9,label:"その他",keys:["notes"]}
 ];
 var navEl=document.getElementById("secNav");
@@ -866,7 +1177,11 @@ function updateActiveFromScroll(){
   if(window.innerHeight+window.pageYOffset >= document.documentElement.scrollHeight-4) cur=SECTIONS[SECTIONS.length-1].n;
   setActiveTab(cur);
 }
-function hasValue(v){ return Array.isArray(v) ? v.length>0 : String(v||"").trim()!==""; }
+function hasValue(v){
+  if(Array.isArray(v)) return v.some(function(x){ return (x && typeof x==="object") ? Object.keys(x).some(function(k){ return k!=="id" && typeof x[k]==="string" && x[k].trim()!==""; }) : true; });
+  if(v && typeof v==="object") return Object.keys(v).some(function(k){ return !!v[k]; });
+  return String(v||"").trim()!=="";
+}
 function updateNavFilled(){
   var tabs=navEl.querySelectorAll(".tab");
   SECTIONS.forEach(function(s,i){ tabs[i].classList.toggle("filled", s.keys.some(function(k){ return hasValue(form[k]) || !!detailOf(k); })); });
@@ -877,11 +1192,12 @@ window.addEventListener("resize",function(){ setHeaderVar(); updateActiveFromScr
 formEl.addEventListener("input",function(e){
   updateNavFilled(); updateMedHint();
   var k=e.target.dataset && e.target.dataset.key;
-  if(k==="staffName"||k==="staffPhone") lsSet("akizakura-intake-staff",{staffName:form.staffName,staffPhone:form.staffPhone});
+  if(k==="name") redrawGeno();
   saveDraftSoon();
 });
-formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")){ updateConditionals(); updateNavFilled(); updateMedHint(); saveDraftSoon(); } });
-formEl.addEventListener("toggle",function(e){ if(e.target.id==="sec-6") updateMedHint(); },true);
+formEl.addEventListener("click",function(e){ if(e.target.closest(".choice")){ updateConditionals(); updateNavFilled(); updateMedHint(); saveDraftSoon(); if(e.target.closest('[data-field="gender"]')) redrawGeno(); } });
+function redrawGeno(){ var g=formEl.querySelector(".genowrap"); if(g && g._redraw) g._redraw(); }
+formEl.addEventListener("toggle",function(e){ if(e.target.id==="sec-7") updateMedHint(); },true);
 
 if(TEST_MODE){
   document.getElementById("mainNotice").textContent="テストモードです。自由に入力して、一番下の「紹介シートを確認して保存へ」から保存まで試してみてください。集計シートには送信されず、紹介シートの表示と、二重保存の確認やA4判への収まりなどの動きだけを確かめられます。各項目は名前の部分や選択肢を長押しするか、「＋詳細」を押すと、詳細を書き足せます。";
@@ -891,19 +1207,69 @@ setHeaderVar();
 updateActiveFromScroll();
 
 /* ---- Sheet rendering ---- */
-function row(label,value,multiline){
-  return '<tr><th>'+esc(label)+'</th><td colspan="5"'+(multiline?' style="white-space:pre-wrap"':'')+'>'+esc(value||"")+(value?"":"　")+'</td></tr>';
+/* ---- Referral sheet model (shared by the printed sheet and the text copy) ---- */
+function sheetModel(){
+  var C=columns(), F=C.F;
+  var medItems=[];
+  MED_ITEMS.forEach(function(m){
+    if(form[m[0]]!=="あり") return;
+    var extra=[F[m[0]+"Detail"]?F[m[0]+"Detail"]+m[3]:""];
+    if(m[0]==="medInsulin") extra=[F.insulinBy,F.insulinMethod,F.medInsulinDetail];
+    medItems.push([m[1],withExtras("あり",extra)]);
+  });
+  medItems.push(["褥瘡",F.pressureSore],["その他の医療依存",F.medicalDependency],["その他の医療処置",F.medicalProcedures]);
+  var medical=[
+    {t:"病名とかかりつけ",lines:diseaseLines()},
+    {t:"経過",lines:[F.medicalHistory]},
+    {t:"医療処置と医療依存",items:medItems},
+    {t:"お薬",lines:[F.medicines]}
+  ];
+  var dementia=[{two:true,items:[
+    ["診断",F.dementiaDiagnosis],["種類",form.dementiaDiagnosis==="診断あり"?C.dementiaTypeOnly:""],["症状",F.dementiaSymptomList],["状況",F.dementiaSymptoms],
+    ["理解力",F.comprehension],["ナースコール",F.nurseCall],["精神状況の問題",F.mentalProblems],["対策",F.mentalMeasures],["その他",F.mentalOther]
+  ]}];
+  var other=[
+    {t:"生活状況",items:[["現状",C.status],["現状の詳細",F.currentStatusDetail],["生活保護",F.welfare],["担当CM・SW",F.caseManager]]},
+    {t:"身体状況",two:true,items:[["麻痺",C.paralysis],["視力",C.vision],["聴力",C.hearing],["会話",C.speech],["リハビリ",C.rehab]]},
+    {t:"ADL",items:[["食事",C.meal],["排泄",C.toilet],["洗面",F.adlWash],["入浴",C.bath],["更衣",C.dress],["移乗",C.transfer],["移動",C.mobility],["睡眠",C.sleep],["口腔ケア",C.oralOnly]]},
+    {t:"利用中のサービス",lines:[F.currentServices]},
+    {t:"備考",lines:[F.notes]}
+  ];
+  return {C:C,F:F,medical:medical,dementia:dementia,other:other};
 }
+function cleanGroups(groups){
+  return groups.map(function(g){
+    return {t:g.t, two:g.two, items:(g.items||[]).filter(function(p){ return p[1] && String(p[1]).trim(); }), lines:(g.lines||[]).filter(function(l){ return l && String(l).trim(); })};
+  }).filter(function(g){ return g.items.length||g.lines.length; });
+}
+function groupsHtml(groups){
+  return cleanGroups(groups).map(function(g){
+    var h='<div class="sg'+(g.two?' two':'')+'">'+(g.t?'<div class="sgt">'+esc(g.t)+'</div>':'');
+    g.items.forEach(function(p){ h+='<div class="si"><span class="sl">'+esc(p[0])+'：</span>'+esc(p[1]).replace(/\n/g,"<br>")+'</div>'; });
+    g.lines.forEach(function(l){ h+='<div class="si">'+esc(l).replace(/\n/g,"<br>")+'</div>'; });
+    return h+'</div>';
+  }).join("");
+}
+function groupsText(groups){
+  var out=[];
+  cleanGroups(groups).forEach(function(g){
+    if(g.t) out.push("【"+g.t+"】");
+    g.items.forEach(function(p){ out.push(p[0]+"："+String(p[1]).replace(/\n/g,"\n　")); });
+    g.lines.forEach(function(l){ out.push(String(l)); });
+  });
+  return out.join("\n");
+}
+function rowHtml(label,inner){ return '<tr><th>'+esc(label)+'</th><td colspan="5">'+(inner||"　")+'</td></tr>'; }
+function row(label,value){ return rowHtml(label, value?esc(value).replace(/\n/g,"<br>"):""); }
 function renderSheet(){
-  var C=columns(); var F=C.F;
+  var M=sheetModel(), C=M.C, F=M.F;
   var age=computeAge(F.birthDate, F.referralDate);
   var careText=[F.careLevel, F.costShare?("負担割合"+F.costShare):""].filter(Boolean).join("　");
   var consultantNameText=F.consultantName? F.consultantName+(F.consultantRelation?("（"+F.consultantRelation+"）"):"") : "";
   var html='';
   html+='<h2 style="text-align:center;font-weight:700;font-size:1.4545em;line-height:1.4;margin:0">高齢者住宅相談センター 秋桜 お客様紹介シート</h2>';
-  if(F.facilityName) html+='<p style="font-size:1.0909em;margin:8px 0 0">'+esc(F.facilityName)+' 御中</p>';
-  html+='<p style="font-size:1em;line-height:1.65;margin-bottom:0;margin-top:'+(F.facilityName?"4px":"8px")+'">大変お世話になっております。秋桜の'+esc(F.staffName)+'でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。</p>';
-  html+='<p style="text-align:right;font-size:1em;margin:5px 0 0">ご紹介日：'+esc(fmtJP(F.referralDate))+'</p>';
+  html+='<p style="font-size:1em;line-height:1.65;margin:8px 0 0">大変お世話になっております。秋桜の'+esc(F.staffName)+'でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。</p>';
+  html+='<p style="text-align:right;font-size:1em;margin:5px 0 0">実態調査日：'+esc(fmtJP(F.referralDate))+'</p>';
   html+='<h3 style="font-size:1.1364em;font-weight:700;margin:9px 0 0">ご入居希望者様</h3>';
   html+='<table style="margin-top:4px"><tbody>';
   html+=row("フリガナ",F.furigana);
@@ -911,20 +1277,28 @@ function renderSheet(){
   html+='<tr><th>生年月日</th><td>'+esc(withD(fmtJP(F.birthDate),"birthDate")||"　")+'</td><th style="width:10%">性別</th><td style="width:14%">'+esc(F.gender||"　")+'</td><th style="width:10%">年齢</th><td style="width:14%">'+(age!=null?age+"歳":"　")+'</td></tr>';
   html+=row("住所",F.address);
   html+=row("要介護度（負担割合）",careText);
-  html+=row("既往歴と経過",C.history,true);
-  html+=row("認知症状の状況",C.dementiaSymptoms,true);
-  html+=row("医療依存",C.medDependency,true);
-  html+=row("その他",composeSheetOther(),true);
+  html+=rowHtml("既往歴と経過",groupsHtml(M.medical));
+  html+=rowHtml("認知症状の状況",groupsHtml(M.dementia));
+  html+=rowHtml("その他",groupsHtml(M.other));
   html+='</tbody></table>';
-  html+='<h3 style="font-size:1.1364em;font-weight:700;margin:10px 0 0">相談者情報</h3>';
+  html+='<h3 style="font-size:1.1364em;font-weight:700;margin:10px 0 0">KP情報</h3>';
+  var hasGeno=form.genogram&&form.genogram.some(function(m){ return m.rel!=="other"; });
+  function kv2(label,val,first){
+    return '<tr><th>'+esc(label)+'</th><td'+(hasGeno?'':' colspan="5"')+'>'+(val?esc(val):"　")+'</td>'+
+      (first&&hasGeno?'<td rowspan="4" class="genocell"><div class="sgeno">'+genoSVG({forSheet:true})+'</div></td>':'')+'</tr>';
+  }
+  var famText=joinT([genoSummary(),F.familyStructure],"\n");
+  var span=hasGeno?' colspan="2"':' colspan="5"';
   html+='<table style="margin-top:4px"><tbody>';
-  html+=row("フリガナ",F.consultantFurigana);
-  html+=row("氏名（続柄）",consultantNameText);
-  html+=row("住所",F.consultantAddress);
-  html+=row("その他",composeConsultantOther(),true);
+  html+=kv2("フリガナ",F.consultantFurigana,true);
+  html+=kv2("氏名（続柄）",consultantNameText);
+  html+=kv2("住所",F.consultantAddress);
+  html+=kv2("連絡先",F.consultantContact);
+  html+='<tr><th>家族構成</th><td'+span+'>'+(famText?esc(famText).replace(/\n/g,"<br>"):"　")+'</td></tr>';
+  html+='<tr><th>その他</th><td'+span+'>'+(F.consultantOther?esc(F.consultantOther).replace(/\n/g,"<br>"):"　")+'</td></tr>';
   html+='</tbody></table>';
-  html+='<p style="font-size:.9545em;margin:10px 0 0">※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。</p>';
-  html+='<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(F.staffName)+'</p><p>TEL：'+esc(F.staffPhone)+'</p><p>メール：info@goodbyinc.com</p></div>';
+  html+='<div class="sheet-foot"><p class="sheet-note">※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。</p>'+
+    '<div class="sheet-sign"><p>高齢者住宅相談センター 秋桜</p><p>担当：'+esc(F.staffName)+'</p><p>TEL：'+COMPANY_TEL+'</p><p>メール：info@goodbyinc.com</p></div></div>';
   document.getElementById("sheetPage").innerHTML=html;
   fitSheet();
 }
@@ -985,8 +1359,8 @@ function toast(msg){
 }
 
 /* Items the referral sheet usually needs. Missing ones are listed on the confirm screen; saving is not blocked (only the name is required). */
-var CHECK_KEYS=[["staffName","担当者"],["staffPhone","担当電話"],["name","氏名"],["furigana","フリガナ"],["gender","性別"],["birthDate","生年月日"],["address","住所"],
-  ["careLevel","要介護度"],["currentStatus","現状"],["consultantName","相談者氏名"],["consultantContact","相談者連絡先"],["desiredArea","希望エリア"],["desiredTiming","入居希望時期"]];
+var CHECK_KEYS=[["staffName","担当者"],["name","氏名"],["furigana","フリガナ"],["gender","性別"],["birthDate","生年月日"],["address","住所"],
+  ["careLevel","要介護度"],["currentStatus","現状"],["consultantName","KP氏名"],["consultantContact","KP連絡先"],["desiredArea","希望エリア"],["desiredTiming","入居希望時期"]];
 function renderMissing(){
   var box=document.getElementById("missingBox");
   var miss=CHECK_KEYS.filter(function(p){ return !hasValue(form[p[0]]); });
@@ -1118,32 +1492,35 @@ document.getElementById("backBtn").addEventListener("click", function(){
 
 /* ---- Copy the referral sheet as plain text ---- */
 function sheetText(){
-  var C=columns(), F=C.F, age=computeAge(F.birthDate,F.referralDate), out=[];
+  var M=sheetModel(), C=M.C, F=M.F, age=computeAge(F.birthDate,F.referralDate), out=[];
   function line(label,val){ if(val) out.push(label+"："+String(val).replace(/\n/g,"\n　")); }
+  function block(label,groups){ var t=groupsText(groups); if(t){ out.push(""); out.push("■"+label); out.push(t); } }
   out.push("高齢者住宅相談センター 秋桜 お客様紹介シート");
-  if(F.facilityName) out.push(F.facilityName+" 御中");
   out.push("");
   out.push("大変お世話になっております。秋桜の"+F.staffName+"でございます。ご入居を検討されている方をご紹介いたします。尚、お客様のご希望により見学同行をさせていただくこともございます。何卒よろしくお願い申し上げます。");
   out.push("");
-  out.push("ご紹介日："+fmtJP(F.referralDate));
-  out.push(""); out.push("【ご入居希望者様】");
+  out.push("実態調査日："+fmtJP(F.referralDate));
+  out.push(""); out.push("■ご入居希望者様");
   line("フリガナ",F.furigana); line("氏名",F.name);
   line("生年月日",withD(fmtJP(F.birthDate),"birthDate")); line("性別",F.gender); if(age!=null) line("年齢",age+"歳");
   line("住所",F.address);
   line("要介護度（負担割合）",joinT([F.careLevel,F.costShare?"負担割合"+F.costShare:""],"　"));
-  line("既往歴と経過",C.history); line("認知症状の状況",C.dementiaSymptoms); line("医療依存",C.medDependency);
-  var other=composeSheetOther(); if(other){ out.push("その他："); other.split("\n").forEach(function(l){ out.push("　"+l.replace(/^　/,"　")); }); }
-  out.push(""); out.push("【相談者情報】");
+  block("既往歴と経過",M.medical);
+  block("認知症状の状況",M.dementia);
+  block("その他",M.other);
+  out.push(""); out.push("■KP情報");
   line("フリガナ",F.consultantFurigana);
   line("氏名（続柄）",F.consultantName?F.consultantName+(F.consultantRelation?"（"+F.consultantRelation+"）":""):"");
-  line("住所",F.consultantAddress);
-  var co=composeConsultantOther(); if(co){ out.push("その他："); co.split("\n").forEach(function(l){ out.push("　"+l); }); }
+  line("住所",F.consultantAddress); line("連絡先",F.consultantContact);
+  line("家族構成",joinT([genoSummary(),F.familyStructure],"\n"));
+  line("その他",F.consultantOther);
   out.push("");
   out.push("※ご見学者様から直接お電話があった際、ご入居が決まりましたら必ずご一報ください。");
   out.push("");
-  out.push("高齢者住宅相談センター 秋桜"); out.push("担当："+F.staffName); out.push("TEL："+F.staffPhone); out.push("メール：info@goodbyinc.com");
+  out.push("高齢者住宅相談センター 秋桜"); out.push("担当："+F.staffName); out.push("TEL："+COMPANY_TEL); out.push("メール：info@goodbyinc.com");
   return out.join("\n");
 }
+
 function copyText(text){
   function fallback(){
     var ta=document.createElement("textarea"); ta.value=text; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.opacity="0";
