@@ -1403,6 +1403,9 @@ var SAVE_LABEL="この内容で集計シートに保存する";
 var TIMEOUT_MS=20000;
 /* saved: null (not saved yet) or {snapshot, status:"ok"|"unknown"} */
 var saved=null;
+/* One record id per person: saving again with the same id updates the same row and tab instead of adding new ones */
+var recordId="";
+function newRecordId(){ return "R"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
 function snapshot(){ return JSON.stringify(form); }
 function isDirty(){ return !(saved && saved.snapshot===snapshot()); }
@@ -1453,7 +1456,7 @@ function showSheet(mode){
   else if(mode==="unknown"){
     pill.classList.add("warn"); pill.textContent="保存を確認できませんでした";
     msg.className="statusmsg no-print warn";
-    msg.textContent="送信はしましたが、集計シートに保存されたかを確認できませんでした。もう一度保存すると重複する場合があるため、まず閲覧権限のある方に集計シートを確認してもらってください。";
+    msg.textContent="送信はしましたが、保存されたかを確認できませんでした。通信状態のよい場所で「入力に戻る」から、もう一度保存してください。同じ方として上書きされるので、重複はしません。";
   }
   else { /* preview */
     if(!saved){ pill.classList.add("plain"); pill.textContent="まだ保存していません"; }
@@ -1481,10 +1484,11 @@ function askResend(){
   return new Promise(function(resolve){
     var back=document.createElement("div"); back.className="modal-back no-print";
     back.innerHTML='<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">'+
-      '<h3 id="mTitle">この方はすでに保存済みです</h3>'+
-      '<p>もう一度保存すると、集計シートに<strong>新しい行が追加</strong>されます。前に保存した行は残るため、不要になった行は集計シート側で削除が必要です。</p>'+
+      '<h3 id="mTitle">保存済みの内容を修正しますか</h3>'+
+      '<p>この方はすでに保存済みです。「修正して上書き」を選ぶと、お客様紹介シートの同じタブと集計シートの同じ行が、今の内容に書き換わります。</p>'+
       '<div class="mbtns">'+
-        '<button type="button" class="btn-primary" data-r="resend">新しい行として保存する</button>'+
+        '<button type="button" class="btn-primary" data-r="update">修正して上書きする</button>'+
+        '<button type="button" class="btn" data-r="new">別の方として新しく保存する</button>'+
         '<button type="button" class="btn" data-r="cancel">キャンセル</button>'+
       '</div></div>';
     function close(r){ document.removeEventListener("keydown",onKey); back.remove(); resolve(r); }
@@ -1492,21 +1496,23 @@ function askResend(){
     back.addEventListener("click",function(e){ var b=e.target.closest("[data-r]"); if(b) close(b.dataset.r); else if(e.target===back) close("cancel"); });
     document.addEventListener("keydown",onKey);
     document.body.appendChild(back);
-    back.querySelector('[data-r="cancel"]').focus();
+    back.querySelector('[data-r="update"]').focus();
   });
 }
 
 function afterSaved(status, mode){
-  saved={snapshot:snapshot(),status:status};
+  saved={snapshot:snapshot(),status:status,id:recordId};
   clearDraft();
   showSheet(mode);
 }
 function doSend(){
   if(navigator.onLine===false){ showError("インターネットに接続されていません。接続を確認してから、もう一度保存してください。（まだ送信していません）"); return; }
-  if(TEST_MODE){ afterSaved("ok","test"); return; }
+  if(TEST_MODE){ if(!recordId) recordId=newRecordId(); afterSaved("ok","test"); return; }
   sending=true; confirmSaveBtn.disabled=true; confirmSaveBtn.textContent="保存しています…";
   var snap=snapshot();
+  if(!recordId) recordId=newRecordId();
   var payload=buildPayload();
+  payload._id=recordId;
   payload._referral=referralPayload();
   var ctrl = ("AbortController" in window) ? new AbortController() : null;
   var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, TIMEOUT_MS) : null;
@@ -1518,23 +1524,24 @@ function doSend(){
       done();
       if(snapshot()!==snap){ /* edited while sending: keep the state honest */ }
       if(r.json && r.json.ok===true){
-        saved={snapshot:snap,status:"ok"}; clearDraft(); showSheet("ok");
+        saved={snapshot:snap,status:"ok",id:recordId}; clearDraft(); showSheet("ok");
         var tab=r.json.tab, pill=document.getElementById("savePill"), msg=document.getElementById("saveMsg");
         if(tab && tab.ok){
-          pill.textContent="集計シートとお客様紹介シートに保存しました";
-          msg.className="statusmsg no-print"; msg.textContent="お客様紹介シートに「"+tab.name+"」のタブを作りました。";
+          pill.textContent = tab.updated ? "保存済みの内容を修正しました" : "集計シートとお客様紹介シートに保存しました";
+          msg.className="statusmsg no-print";
+          msg.textContent = tab.updated ? "お客様紹介シートの「"+tab.name+"」のタブと集計シートの行を、今の内容に書き換えました。" : "お客様紹介シートに「"+tab.name+"」のタブを作りました。";
         } else if(tab && !tab.ok){
           pill.className="pill warn"; pill.textContent="お客様紹介シートのタブを作れませんでした";
           msg.className="statusmsg no-print warn";
-          msg.textContent="集計シートには保存しましたが、お客様紹介シートへのタブ作成に失敗しました（"+tab.error+"）。もう一度保存すると集計シートに行が重複するため、河田に連絡してください。";
+          msg.textContent="集計シートには保存しましたが、お客様紹介シートのタブを作成または修正できませんでした（"+tab.error+"）。少し時間をおいて、もう一度保存してください（同じ方として上書きされるので重複しません）。直らない時は河田に連絡してください。";
         }
       }
       else if(r.json && r.json.ok===false){ showError("集計シートへの保存に失敗しました（"+(r.json.error||"理由不明")+"）。時間をおいて、もう一度お試しください。"); }
-      else { saved={snapshot:snap,status:"unknown"}; clearDraft(); showSheet("unknown"); }
+      else { saved={snapshot:snap,status:"unknown",id:recordId}; clearDraft(); showSheet("unknown"); }
     })
     .catch(function(){
       /* Network error, timeout or unreadable reply: the request may still have reached the sheet. */
-      done(); saved={snapshot:snap,status:"unknown"}; clearDraft(); showSheet("unknown");
+      done(); saved={snapshot:snap,status:"unknown",id:recordId}; clearDraft(); showSheet("unknown");
     });
 }
 
@@ -1550,11 +1557,14 @@ confirmSaveBtn.addEventListener("click", function(){
   }
   if(!saved){ doSend(); return; }
   if(!isDirty()){ showSheet("preview"); return; }
-  askResend().then(function(r){ if(r==="resend") doSend(); });
+  askResend().then(function(r){
+    if(r==="update") doSend();
+    else if(r==="new"){ recordId=""; saved=null; doSend(); }
+  });
 });
 document.getElementById("newBtn").addEventListener("click", function(){
   clearDraft();
-  form=emptyForm(); saved=null; renderForm();
+  form=emptyForm(); saved=null; recordId=""; renderForm();
   showForm(); activeSec=0; window.scrollTo(0,0); updateActiveFromScroll();
 });
 document.getElementById("backBtn").addEventListener("click", function(){
@@ -1621,7 +1631,7 @@ function formHasContent(f){
 function saveDraftSoon(){
   clearTimeout(draftTimer);
   draftTimer=setTimeout(function(){
-    if(formHasContent(form) && isDirty()) lsSet(DRAFT_KEY,{v:1,at:Date.now(),form:form});
+    if(formHasContent(form) && isDirty()) lsSet(DRAFT_KEY,{v:1,at:Date.now(),form:form,recordId:recordId,saved:saved});
     else lsDel(DRAFT_KEY);
   },400);
 }
@@ -1651,8 +1661,8 @@ function restoreDraftPrompt(){
       for(var k in src){ if(src.hasOwnProperty(k) && k in f) f[k]=src[k]; }
       ARRAY_KEYS.forEach(function(k){ if(!Array.isArray(f[k])) f[k]=[]; });
       if(!f.details || typeof f.details!=="object") f.details={};
-      form=f; renderForm(); updateActiveFromScroll();
-      toast("入力途中の内容を読み込みました");
+      form=f; recordId=d.recordId||""; saved=(d.saved&&d.saved.id)?d.saved:null; renderForm(); updateActiveFromScroll();
+      toast(saved ? "保存済みの方の修正途中の内容を読み込みました" : "入力途中の内容を読み込みました");
     } else { lsDel(DRAFT_KEY); }
     back.remove();
   });
