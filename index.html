@@ -54,7 +54,7 @@ header.top h1{font-size:18px;margin:0;line-height:1.3}
 header.top p{margin:2px 0 0;font-size:12px;color:var(--dim)}
 .badge{margin-left:auto;font-size:12px;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:6px 10px;border-radius:999px;white-space:nowrap}
 section.block{margin-top:28px}
-section.block h2{display:flex;align-items:baseline;gap:10px;font-size:18px;margin:0}
+section.block h2,details.block h2{display:flex;align-items:baseline;gap:10px;font-size:18px;margin:0}
 .num{display:inline-flex;width:28px;height:28px;flex-shrink:0;transform:translateY(4px);align-items:center;justify-content:center;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
 @media (prefers-color-scheme: dark){ .num{color:#10201a} }
 .grid{margin-top:16px;display:grid;grid-template-columns:1fr;gap:16px}
@@ -71,11 +71,13 @@ fieldset legend{font-size:14px;font-weight:600;margin-bottom:6px;padding:0}
 .choice.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700}
 @media (prefers-color-scheme: dark){ .choice.active{color:#10201a} }
 .subhead{margin-top:8px;padding-bottom:4px;border-bottom:1px solid var(--border);font-size:15px;font-weight:700;color:var(--accent)}
-details.collapsible>summary{list-style:none;cursor:pointer;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:12px 14px}
+details.collapsible>summary{list-style:none;cursor:pointer;padding:0;border:0;background:none}
 details.collapsible>summary::-webkit-details-marker{display:none}
-details.collapsible[open]>summary{border-color:var(--accent)}
+details.block{margin-top:28px}
 details.collapsible>summary h2{flex-wrap:wrap}
-.togglehint{margin-left:auto;font-size:13px;font-weight:600;color:var(--dim)}
+.togglehint{margin-left:auto;font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:6px 12px;white-space:nowrap}
+.togglehint:after{content:" ▼";font-size:10px}
+details.collapsible[open] .togglehint:after{content:" ▲"}
 .secnote{margin:8px 0 0;font-size:13px;color:var(--dim)}
 /* Header preview button */
 .hdr-preview{margin-left:auto;min-height:40px;font-size:14px;white-space:nowrap;flex-shrink:0}
@@ -135,6 +137,7 @@ body.sheet-mode .scrubber, body.sheet-mode .scrubbubble{display:none !important}
 .grow{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:8px}
 .gcard input{min-height:44px}
 .glabel{margin-bottom:8px}
+.gaddr{margin-bottom:8px}
 .gflags .choice{min-height:40px;font-size:14px;padding:0 12px}
 /* Sheet groups */
 .sheet-page .sg{margin:0 0 .35em}
@@ -809,6 +812,7 @@ function genoSummary(){
   var g=form.genogram||[]; if(!g.length) return "";
   return g.map(function(m){
     var flags=[]; if(m.dead) flags.push("故人"); if(m.cohabit) flags.push("同居"); if(m.kp) flags.push("KP");
+    if((m.addr||"").trim()) flags.push("住所："+m.addr.trim());
     var t=relName(m)+((m.name||"").trim()?" "+m.name.trim():"")+((m.age||"").trim()?" "+m.age.trim()+"歳":"");
     return t+(flags.length?"（"+flags.join("、")+"）":"");
   }).join("、");
@@ -923,7 +927,7 @@ function genogramField(){
       var exists=r.once && form.genogram.some(function(m){ return m.rel===r.rel; });
       b.disabled=!!exists;
       b.addEventListener("click",function(){
-        form.genogram.push({id:"g"+(Date.now()%1e7)+"_"+(genoSeq++),rel:r.rel,name:"",age:"",sex:"",label:"",dead:false,cohabit:false,kp:false});
+        form.genogram.push({id:"g"+(Date.now()%1e7)+"_"+(genoSeq++),rel:r.rel,name:"",age:"",addr:"",sex:"",label:"",dead:false,cohabit:false,kp:false});
         changed();
         var cards=list.querySelectorAll(".gcard"); var last=cards[cards.length-1]; if(last){ last.scrollIntoView({behavior:"smooth",block:"center"}); }
       });
@@ -936,10 +940,13 @@ function genogramField(){
       c.innerHTML='<div class="gtop"><strong>'+esc(relName(m))+'</strong><button type="button" class="gdel" aria-label="削除">削除</button></div>'+
         (m.rel==="other"?'<input type="text" class="glabel" placeholder="続柄（例：甥、姪、知人）">':'')+
         '<div class="grow"><input type="text" class="gname" placeholder="名前（任意）"><input type="text" class="gage" inputmode="numeric" placeholder="年齢"></div>'+
+        '<input type="text" class="gaddr" placeholder="住所（任意、例：東京都武蔵野市）">'+
         '<div class="choices gflags">'+(needSex?'<button type="button" class="choice" data-sex="M">男性</button><button type="button" class="choice" data-sex="F">女性</button>':'')+
         '<button type="button" class="choice" data-flag="dead">故人</button><button type="button" class="choice" data-flag="cohabit">同居</button><button type="button" class="choice" data-flag="kp">KP</button></div>';
       var nm=c.querySelector(".gname"), ag=c.querySelector(".gage"), lb=c.querySelector(".glabel");
-      nm.value=m.name; ag.value=m.age; if(lb) lb.value=m.label;
+      var ad=c.querySelector(".gaddr");
+      nm.value=m.name; ag.value=m.age; ad.value=m.addr||""; if(lb) lb.value=m.label;
+      ad.addEventListener("input",function(){ m.addr=ad.value; });
       nm.addEventListener("input",function(){ m.name=nm.value; drawView(); });
       ag.addEventListener("input",function(){ m.age=ag.value; drawView(); });
       if(lb) lb.addEventListener("input",function(){ m.label=lb.value; c.querySelector(".gtop strong").textContent=relName(m); });
